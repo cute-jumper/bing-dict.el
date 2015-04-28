@@ -130,20 +130,22 @@
 (defun bing-dict-brief-cb (status keyword)
   (set-buffer-multibyte t)
   (bing-dict--delete-response-header)
-  (if (bing-dict--has-result-p)
-      (if (bing-dict--definitions-exist-p)
-          (let ((query-word (propertize keyword 'face 'font-lock-keyword-face))
-                (pronunciation (bing-dict--pronunciation))
-                (short-exps (mapconcat 'identity (bing-dict--definitions)
-                                       (propertize " | "
-                                                   'face
-                                                   'font-lock-builtin-face))))
-            (message "%s %s: %s" query-word pronunciation short-exps))
-        (message "Machine translation: %s --> %s" keyword
-                 (propertize (bing-dict--machine-translation)
-                             'face
-                             'font-lock-doc-face)))
-    (message "No results")))
+  (condition-case nil
+      (if (bing-dict--has-result-p)
+          (if (bing-dict--definitions-exist-p)
+              (let ((query-word (propertize keyword 'face 'font-lock-keyword-face))
+                    (pronunciation (bing-dict--pronunciation))
+                    (short-exps (mapconcat 'identity (bing-dict--definitions)
+                                           (propertize " | "
+                                                       'face
+                                                       'font-lock-builtin-face))))
+                (message "%s %s: %s" query-word pronunciation short-exps))
+            (message "Machine translation: %s --> %s" keyword
+                     (propertize (bing-dict--machine-translation)
+                                 'face
+                                 'font-lock-doc-face)))
+        (message "No results"))
+    (error (message "No results"))))
 
 ;;;###autoload
 (defun bing-dict-brief ()
