@@ -148,13 +148,14 @@
     (error (message "No results"))))
 
 ;;;###autoload
-(defun bing-dict-brief ()
+(defun bing-dict-brief (&optional word)
   (interactive)
-  (let* ((keyword (url-hexify-string
-                   (read-string "Search Bing dict: "
-                                (if mark-active
-                                    (buffer-substring (region-beginning) (region-end))
-                                  (word-at-point))))))
+  (let* ((keyword (if word word
+                    (url-hexify-string
+                     (read-string "Search Bing dict: "
+                                  (if mark-active
+                                      (buffer-substring (region-beginning) (region-end))
+                                    (word-at-point)))))))
     (url-retrieve (concat "http://www.bing.com/dict/search?q=" keyword)
                   'bing-dict-brief-cb
                   `(,(decode-coding-string (url-unhex-string keyword) 'utf-8))
