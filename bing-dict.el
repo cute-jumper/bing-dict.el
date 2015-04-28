@@ -114,9 +114,10 @@
       (save-match-data
         (goto-char (point-min))
         (setq has-result (not (re-search-forward "div class=\"no_results\"" nil t)))
-        (unless has-result
+        (when has-result
           (goto-char (point-min))
-          (setq has-result (not (re-search-forward "div class=\"p2-2\">Did you mean</div>"))))
+          (setq has-result
+                (not (re-search-forward "div class=\"df_wb_a\">Sounds like</div>" nil t))))
         has-result))))
 
 (defun bing-dict--machine-translation ()
