@@ -20,11 +20,12 @@
 
 ;;; Commentary:
 
-;; 
+;;
 
 ;;; Code:
 
 (require 'thingatpt)
+(require 'esqlite)
 
 (defun bing-dict--replace-html-entities (str)
   (let ((retval str)
@@ -53,7 +54,7 @@
       (save-match-data
         (goto-char (point-min))
         (if (re-search-forward "prUS.*?\\(\\[.*?\\]\\)" nil t)
-            (match-string-no-properties 1)                    
+            (match-string-no-properties 1)
           (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
           (match-string-no-properties 1)))))
    'face
@@ -94,6 +95,12 @@
       (goto-char (point-min))
       (not (re-search-forward "div class=\"smt_hw\"" nil t)))))
 
+(defun bing-dict--has-result-p ()
+  (save-excursion
+    (save-match-data
+      (goto-char (point-min))
+      (not (re-search-forward "div class=\"no_results\"" nil t)))))
+
 (defun bing-dict--machine-translation ()
   (save-excursion
     (save-match-data
@@ -104,30 +111,38 @@
 (defun bing-dict-short-explanation-cb (status keyword)
   (set-buffer-multibyte t)
   (bing-dict--delete-response-header)
-  (if (bing-dict--definitions-exist-p)
-      (let ((query-word (propertize keyword 'face 'font-lock-keyword-face))
-            (pronunciation (bing-dict--pronunciation))
-            (short-exps (mapconcat 'identity (bing-dict--definitions)
-                                   (propertize " | "
-                                               'face
-                                               'font-lock-builtin-face))))
-        (message "%s %s: %s" query-word pronunciation short-exps))
-    (message "Machine translation: %s --> %s" keyword
-             (propertize (bing-dict--machine-translation)
-                         'face
-                         'font-lock-doc-face))))
+  (if (bing-dict--has-result-p)
+      (if (bing-dict--definitions-exist-p)
+          (let ((query-word (propertize keyword 'face 'font-lock-keyword-face))
+                (pronunciation (bing-dict--pronunciation))
+                (short-exps (mapconcat 'identity (bing-dict--definitions)
+                                       (propertize " | "
+                                                   'face
+                                                   'font-lock-builtin-face))))
+            (message "%s %s: %s" query-word pronunciation short-exps))
+        (message "Machine translation: %s --> %s" keyword
+                 (propertize (bing-dict--machine-translation)
+                             'face
+                             'font-lock-doc-face)))
+    (message "No results")))
 
 ;;;###autoload
 (defun bing-dict-short-explanation ()
   (interactive)
-  (let ((keyword (url-hexify-string
-                  (read-string "Search Bing dict: "
-                               (if mark-active
-                                   (buffer-substring (region-beginning) (region-end))
-                                 (word-at-point))))))
+  (let* ((keyword (url-hexify-string
+                   (read-string "Search Bing dict: "
+                                (if mark-active
+                                    (buffer-substring (region-beginning) (region-end))
+                                  (word-at-point)))))
+         (cookie-list (esqlite-read
+                       (car (file-expand-wildcards "~/.mozilla/firefox/*.default/cookies.sqlite"))
+                       "SELECT name, value FROM moz_cookies where host like \"%.bing.com%\""))
+         (url-request-extra-headers
+          `(("Cookie" . ,(mapconcat (lambda (x) (concat (car x) "=" (cadr x))) cookie-list "; ")))))
     (url-retrieve (concat "http://www.bing.com/dict/search?q=" keyword)
                   'bing-dict-short-explanation-cb
                   `(,(decode-coding-string (url-unhex-string keyword) 'utf-8))
+                  t
                   t)))
 
 (provide 'bing-dict)
