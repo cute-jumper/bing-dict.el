@@ -1,6 +1,6 @@
 # bing-dict.el
-A **minimalists'** Emacs extension to show explanations from
-(http://www.bing.com/dict).
+A **minimalists'** Emacs extension to search (http://www.bing.com/dict). 
+Support English to Chinese and Chinese to English.
 
 ## Setup
 
@@ -8,7 +8,13 @@ A **minimalists'** Emacs extension to show explanations from
     (require 'bing-dict)
 
 ## Usage
-You can call `bing-dict-brief` to get the explanations of you query.
+You can call `bing-dict-brief` to get the explanations of you query. The results
+will be shown in the minibuffer.
+
+Here is the screenshot:
+
+![bing-dict-screenshot](./screenshot.png)
+
 You should probably give this command a key binding:
 
     (global-set-key (kbd "C-c d") 'bing-dict-brief)
