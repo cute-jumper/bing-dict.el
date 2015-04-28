@@ -36,9 +36,11 @@
 
 ;;     (global-set-key (kbd "C-c d") 'bing-dict-brief)
 
-;; ## Using Firefox's cookies
+;; ## Using Firefox's Cookies Under Linux
+;; Note this feature is only tested for Firefox 37 under Linux.
+
 ;; If you are using Firefox under Linux, you can search the word using your
-;; Firefox's cookies. Why adding this functionality? Because if you've logged into
+;; Firefox's cookies. Why adding this feature? Because if you've logged into
 ;; `bing.com` in your Firefox and you've joined the
 ;; [Bing Rewards](https://www.bing.com/rewards/dashboard) program, then your search
 ;; within Emacs also counts towards the number of total searches you've performed,
