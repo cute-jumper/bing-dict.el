@@ -1,4 +1,4 @@
-;;; bing-dict.el --- Search bing dictionary          -*- lexical-binding: t; -*-
+;;; bing-dict.el --- Search bing dictionary
 
 ;; Copyright (C) 2015  Junpeng Qiu
 
@@ -25,7 +25,34 @@
 ;;; Code:
 
 (require 'thingatpt)
-(require 'esqlite)
+
+(defvar bing-dict-sqlite-program "sqlite3")
+
+(defvar bing-dict-use-firefox-cookies nil
+  "Whether we should use firefox's cookies")
+
+(defvar bing-dict-firefox-cookies-file
+  "~/.mozilla/firefox/*.default/cookies.sqlite"
+  "Whether we should use firefox's cookies")
+
+(defun bing-dict--read-firefox-cookies ()
+  (when (executable-find bing-dict-sqlite-program)
+    (let* ((sqlite-file-cons (file-expand-wildcards
+                              (expand-file-name
+                               bing-dict-firefox-cookies-file)))
+           (args
+            (when sqlite-file-cons
+              `("-batch"
+                "-csv"
+                ,(car sqlite-file-cons)
+                "SELECT name, value FROM moz_cookies where host like \"%.bing.com%\""))))
+      (when (string))
+      (with-temp-buffer
+        (apply 'call-process bing-dict-sqlite-program nil t nil args)
+        (replace-regexp-in-string
+         ","
+         "="
+         (replace-regexp-in-string "\n" "; " (buffer-string)))))))
 
 (defun bing-dict--replace-html-entities (str)
   (let ((retval str)
@@ -108,7 +135,7 @@
       (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
         (bing-dict--clean-inner-html (match-string-no-properties 1))))))
 
-(defun bing-dict-short-explanation-cb (status keyword)
+(defun bing-dict-brief-cb (status keyword)
   (set-buffer-multibyte t)
   (bing-dict--delete-response-header)
   (if (bing-dict--has-result-p)
@@ -127,20 +154,18 @@
     (message "No results")))
 
 ;;;###autoload
-(defun bing-dict-short-explanation ()
+(defun bing-dict-brief ()
   (interactive)
   (let* ((keyword (url-hexify-string
                    (read-string "Search Bing dict: "
                                 (if mark-active
                                     (buffer-substring (region-beginning) (region-end))
                                   (word-at-point)))))
-         (cookie-list (esqlite-read
-                       (car (file-expand-wildcards "~/.mozilla/firefox/*.default/cookies.sqlite"))
-                       "SELECT name, value FROM moz_cookies where host like \"%.bing.com%\""))
          (url-request-extra-headers
-          `(("Cookie" . ,(mapconcat (lambda (x) (concat (car x) "=" (cadr x))) cookie-list "; ")))))
+          (when bing-dict-use-firefox-cookies
+            `(("Cookie" . ,(bing-dict--read-firefox-cookies))))))
     (url-retrieve (concat "http://www.bing.com/dict/search?q=" keyword)
-                  'bing-dict-short-explanation-cb
+                  'bing-dict-brief-cb
                   `(,(decode-coding-string (url-unhex-string keyword) 'utf-8))
                   t
                   t)))
