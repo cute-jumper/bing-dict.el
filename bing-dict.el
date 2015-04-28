@@ -36,56 +36,9 @@
 
 ;;     (global-set-key (kbd "C-c d") 'bing-dict-brief)
 
-;; ## Using Firefox's Cookies Under Linux
-;; Note this feature is only tested for Firefox 37 under Linux.
-
-;; If you are using Firefox under Linux, you can search the word using your
-;; Firefox's cookies. Why adding this feature? Because if you've logged into
-;; `bing.com` in your Firefox and you've joined the
-;; [Bing Rewards](https://www.bing.com/rewards/dashboard) program, then your search
-;; within Emacs also counts towards the number of total searches you've performed,
-;; just like you're using Firefox to perform the Bing search.
-
-;; To enable this, use the following setting:
-
-;;     (setq bing-dict-use-firefox-cookies t)
-
-;; If your Firefox cookie file is not something like
-;; `~/.mozilla/firefox/*.default/cookies.sqlite`, then you should set the value of
-;; `bing-dict-firefox-cookies-file`.
-
-
-
 ;;; Code:
 
 (require 'thingatpt)
-
-(defvar bing-dict-sqlite-program "sqlite3")
-
-(defvar bing-dict-use-firefox-cookies nil
-  "Whether we should use firefox's cookies")
-
-(defvar bing-dict-firefox-cookies-file
-  "~/.mozilla/firefox/*.default/cookies.sqlite"
-  "The path to the Firefox's cookie file")
-
-(defun bing-dict--read-firefox-cookies ()
-  (when (executable-find bing-dict-sqlite-program)
-    (let* ((sqlite-file-cons (file-expand-wildcards
-                              (expand-file-name
-                               bing-dict-firefox-cookies-file)))
-           (args
-            (when sqlite-file-cons
-              `("-batch"
-                "-csv"
-                ,(car sqlite-file-cons)
-                "SELECT name, value FROM moz_cookies where host like \"%.bing.com%\""))))
-      (with-temp-buffer
-        (apply 'call-process bing-dict-sqlite-program nil t nil args)
-        (replace-regexp-in-string
-         ","
-         "="
-         (replace-regexp-in-string "\n" "; " (buffer-string)))))))
 
 (defun bing-dict--replace-html-entities (str)
   (let ((retval str)
@@ -156,10 +109,15 @@
       (not (re-search-forward "div class=\"smt_hw\"" nil t)))))
 
 (defun bing-dict--has-result-p ()
-  (save-excursion
-    (save-match-data
-      (goto-char (point-min))
-      (not (re-search-forward "div class=\"no_results\"" nil t)))))
+  (let (has-result)
+    (save-excursion
+      (save-match-data
+        (goto-char (point-min))
+        (setq has-result (not (re-search-forward "div class=\"no_results\"" nil t)))
+        (unless has-result
+          (goto-char (point-min))
+          (setq has-result (not (re-search-forward "div class=\"p2-2\">Did you mean</div>"))))
+        has-result))))
 
 (defun bing-dict--machine-translation ()
   (save-excursion
@@ -193,10 +151,7 @@
                    (read-string "Search Bing dict: "
                                 (if mark-active
                                     (buffer-substring (region-beginning) (region-end))
-                                  (word-at-point)))))
-         (url-request-extra-headers
-          (when bing-dict-use-firefox-cookies
-            `(("Cookie" . ,(bing-dict--read-firefox-cookies))))))
+                                  (word-at-point))))))
     (url-retrieve (concat "http://www.bing.com/dict/search?q=" keyword)
                   'bing-dict-brief-cb
                   `(,(decode-coding-string (url-unhex-string keyword) 'utf-8))
