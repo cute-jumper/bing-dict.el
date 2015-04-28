@@ -65,7 +65,7 @@
 
 (defvar bing-dict-firefox-cookies-file
   "~/.mozilla/firefox/*.default/cookies.sqlite"
-  "Whether we should use firefox's cookies")
+  "The path to the Firefox's cookie file")
 
 (defun bing-dict--read-firefox-cookies ()
   (when (executable-find bing-dict-sqlite-program)
