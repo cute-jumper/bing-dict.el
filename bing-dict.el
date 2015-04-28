@@ -80,7 +80,6 @@
                 "-csv"
                 ,(car sqlite-file-cons)
                 "SELECT name, value FROM moz_cookies where host like \"%.bing.com%\""))))
-      (when (string))
       (with-temp-buffer
         (apply 'call-process bing-dict-sqlite-program nil t nil args)
         (replace-regexp-in-string
