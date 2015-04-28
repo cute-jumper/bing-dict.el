@@ -3,6 +3,7 @@
 ;; Copyright (C) 2015  Junpeng Qiu
 
 ;; Author: Junpeng Qiu <qjpchmail@gmail.com>
+;; URL: https://github.com/cute-jumper/bing-dict.el
 ;; Keywords: extensions
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -150,15 +151,14 @@
 ;;;###autoload
 (defun bing-dict-brief (&optional word)
   (interactive)
-  (let* ((keyword (if word word
-                    (url-hexify-string
-                     (read-string "Search Bing dict: "
-                                  (if mark-active
-                                      (buffer-substring (region-beginning) (region-end))
-                                    (word-at-point)))))))
-    (url-retrieve (concat "http://www.bing.com/dict/search?q=" keyword)
+  (let ((keyword (or word (read-string
+                           "Search Bing dict: "
+                           (if (use-region-p)
+                               (buffer-substring (region-beginning) (region-end))
+                             (thing-at-point 'word t))))))
+    (url-retrieve (concat "http://www.bing.com/dict/search?q=" (url-hexify-string keyword))
                   'bing-dict-brief-cb
-                  `(,(decode-coding-string (url-unhex-string keyword) 'utf-8))
+                  `(,(decode-coding-string keyword 'utf-8))
                   t
                   t)))
 
