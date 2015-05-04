@@ -1,5 +1,8 @@
 # bing-dict.el
-A **minimalists'** Emacs extension to search (http://www.bing.com/dict). 
+[![MELPA](http://melpa.org/packages/bing-dict-badge.svg)](http://melpa.org/#/bing-dict)
+[![MELPA Stable](http://stable.melpa.org/packages/bing-dict-badge.svg)](http://stable.melpa.org/#/bing-dict)
+
+A **minimalists'** Emacs extension to search (http://www.bing.com/dict).
 Support English to Chinese and Chinese to English.
 
 ## Setup
