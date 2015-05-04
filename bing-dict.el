@@ -154,9 +154,11 @@
   (let ((keyword (or word (read-string
                            "Search Bing dict: "
                            (if (use-region-p)
-                               (buffer-substring (region-beginning) (region-end))
+                               (buffer-substring-no-properties
+                                (region-beginning) (region-end))
                              (thing-at-point 'word t))))))
-    (url-retrieve (concat "http://www.bing.com/dict/search?q=" (url-hexify-string keyword))
+    (url-retrieve (concat "http://www.bing.com/dict/search?q="
+                          (url-hexify-string keyword))
                   'bing-dict-brief-cb
                   `(,(decode-coding-string keyword 'utf-8))
                   t
