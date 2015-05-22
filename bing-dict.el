@@ -65,12 +65,11 @@
   (propertize
    (bing-dict--replace-html-entities
     (save-excursion
-      (save-match-data
-        (goto-char (point-min))
-        (if (re-search-forward "prUS.*?\\(\\[.*?\\]\\)" nil t)
-            (match-string-no-properties 1)
-          (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
-          (match-string-no-properties 1)))))
+      (goto-char (point-min))
+      (if (re-search-forward "prUS.*?\\(\\[.*?\\]\\)" nil t)
+          (match-string-no-properties 1)
+        (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
+        (match-string-no-properties 1))))
    'face
    'font-lock-comment-face))
 
@@ -80,53 +79,49 @@
 (defun bing-dict--definitions ()
   (let (defs)
     (save-excursion
-      (save-match-data
-        (goto-char (point-min))
-        (while (re-search-forward
-                "span class=\"pos\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
-                nil
-                t)
-          (let ((pos (propertize (match-string-no-properties 1)
-                                 'face
-                                 'font-lock-doc-face))
-                (def (match-string-no-properties 2)))
-            (push (format "%s %s" pos def) defs)))
-        (goto-char (point-min))
-        (when (re-search-forward
-               "span class=\"pos web\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
-               nil
-               t)
-          (let ((pos (propertize (match-string-no-properties 1)
-                                 'face
-                                 'font-lock-doc-face))
-                (def (match-string-no-properties 2)))
-            (push (format "%s %s" pos def) defs)))
-        (mapcar 'bing-dict--clean-inner-html (nreverse defs))))))
+      (goto-char (point-min))
+      (while (re-search-forward
+              "span class=\"pos\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
+              nil
+              t)
+        (let ((pos (propertize (match-string-no-properties 1)
+                               'face
+                               'font-lock-doc-face))
+              (def (match-string-no-properties 2)))
+          (push (format "%s %s" pos def) defs)))
+      (goto-char (point-min))
+      (when (re-search-forward
+             "span class=\"pos web\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
+             nil
+             t)
+        (let ((pos (propertize (match-string-no-properties 1)
+                               'face
+                               'font-lock-doc-face))
+              (def (match-string-no-properties 2)))
+          (push (format "%s %s" pos def) defs)))
+      (mapcar 'bing-dict--clean-inner-html (nreverse defs)))))
 
 (defun bing-dict--definitions-exist-p ()
   (save-excursion
-    (save-match-data
-      (goto-char (point-min))
-      (not (re-search-forward "div class=\"smt_hw\"" nil t)))))
+    (goto-char (point-min))
+    (not (re-search-forward "div class=\"smt_hw\"" nil t))))
 
 (defun bing-dict--has-result-p ()
   (let (has-result)
     (save-excursion
-      (save-match-data
+      (goto-char (point-min))
+      (setq has-result (not (re-search-forward "div class=\"no_results\"" nil t)))
+      (when has-result
         (goto-char (point-min))
-        (setq has-result (not (re-search-forward "div class=\"no_results\"" nil t)))
-        (when has-result
-          (goto-char (point-min))
-          (setq has-result
-                (not (re-search-forward "div class=\"df_wb_a\">Sounds like</div>" nil t))))
-        has-result))))
+        (setq has-result
+              (not (re-search-forward "div class=\"df_wb_a\">Sounds like</div>" nil t))))
+      has-result)))
 
 (defun bing-dict--machine-translation ()
   (save-excursion
-    (save-match-data
-      (goto-char (point-min))
-      (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
-        (bing-dict--clean-inner-html (match-string-no-properties 1))))))
+    (goto-char (point-min))
+    (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
+      (bing-dict--clean-inner-html (match-string-no-properties 1)))))
 
 (defun bing-dict-brief-cb (status keyword)
   (set-buffer-multibyte t)
@@ -134,7 +129,8 @@
   (condition-case nil
       (if (bing-dict--has-result-p)
           (if (bing-dict--definitions-exist-p)
-              (let ((query-word (propertize keyword 'face 'font-lock-keyword-face))
+              (let ((query-word
+                     (propertize keyword 'face 'font-lock-keyword-face))
                     (pronunciation (bing-dict--pronunciation))
                     (short-exps (mapconcat 'identity (bing-dict--definitions)
                                            (propertize " | "
@@ -157,12 +153,13 @@
                                (buffer-substring-no-properties
                                 (region-beginning) (region-end))
                              (thing-at-point 'word t))))))
-    (url-retrieve (concat "http://www.bing.com/dict/search?q="
-                          (url-hexify-string keyword))
-                  'bing-dict-brief-cb
-                  `(,(decode-coding-string keyword 'utf-8))
-                  t
-                  t)))
+    (save-match-data
+      (url-retrieve (concat "http://www.bing.com/dict/search?q="
+                            (url-hexify-string keyword))
+                    'bing-dict-brief-cb
+                    `(,(decode-coding-string keyword 'utf-8))
+                    t
+                    t))))
 
 (provide 'bing-dict)
 ;;; bing-dict.el ends here
