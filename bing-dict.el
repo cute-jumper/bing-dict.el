@@ -66,12 +66,17 @@
 (defun bing-dict--pronunciation ()
   (propertize
    (bing-dict--replace-html-entities
-    (save-excursion
-      (goto-char (point-min))
-      (if (re-search-forward "prUS.*?\\(\\[.*?\\]\\)" nil t)
-          (match-string-no-properties 1)
-        (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
-        (match-string-no-properties 1))))
+    (or
+     (save-excursion
+       (goto-char (point-min))
+       (if (re-search-forward "<div class=\"hd_prUS" nil t)
+           (progn
+             (goto-char (point-min))
+             (when (re-search-forward "<div class=\"hd_prUS[^[]*\\(\\[.*?\\]\\)" nil t)
+               (match-string-no-properties 1)))
+         (when (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
+           (match-string-no-properties 1))))
+     ""))
    'face
    'font-lock-comment-face))
 
@@ -103,21 +108,10 @@
           (push (format "%s %s" pos def) defs)))
       (mapcar 'bing-dict--clean-inner-html (nreverse defs)))))
 
-(defun bing-dict--definitions-exist-p ()
+(defun bing-dict--has-machine-translation-p ()
   (save-excursion
     (goto-char (point-min))
-    (not (re-search-forward "div class=\"smt_hw\"" nil t))))
-
-(defun bing-dict--has-result-p ()
-  (let (has-result)
-    (save-excursion
-      (goto-char (point-min))
-      (setq has-result (not (re-search-forward "div class=\"no_results\"" nil t)))
-      (when has-result
-        (goto-char (point-min))
-        (setq has-result
-              (not (re-search-forward "div class=\"df_wb_a\">Sounds like</div>" nil t))))
-      has-result)))
+    (re-search-forward "div class=\"smt_hw\"" nil t)))
 
 (defun bing-dict--machine-translation ()
   (save-excursion
@@ -125,25 +119,52 @@
     (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
       (bing-dict--clean-inner-html (match-string-no-properties 1)))))
 
+(defun bing-dict--get-sounds-like-words ()
+  (let ((similar-words ""))
+    (save-excursion
+      (goto-char (point-min))
+      (when (re-search-forward "div class=\"web_div\">\\(.*?\\)<div class=\"\\(dym_area\\|dymp_sm_top\\)\"" nil t)
+        (let ((content (match-string-no-properties 1)))
+          (with-temp-buffer
+            (insert content)
+            (goto-char (point-min))
+            (while (re-search-forward "<a.*?>\\(.*?\\)</a><div.*?>\\(.*?\\)</div>" nil t)
+              (setq similar-words (concat similar-words
+                                          (propertize (match-string-no-properties 1)
+                                                      'face
+                                                      'font-lock-keyword-face)
+                                          " "
+                                          (match-string-no-properties 2)
+                                          "; ")))
+            similar-words))))))
+
 (defun bing-dict-brief-cb (status keyword)
   (set-buffer-multibyte t)
   (bing-dict--delete-response-header)
   (condition-case nil
-      (if (bing-dict--has-result-p)
-          (if (bing-dict--definitions-exist-p)
-              (let ((query-word
-                     (propertize keyword 'face 'font-lock-keyword-face))
-                    (pronunciation (bing-dict--pronunciation))
-                    (short-exps (mapconcat 'identity (bing-dict--definitions)
-                                           (propertize " | "
-                                                       'face
-                                                       'font-lock-builtin-face))))
-                (message "%s %s: %s" query-word pronunciation short-exps))
-            (message "Machine translation: %s --> %s" keyword
-                     (propertize (bing-dict--machine-translation)
-                                 'face
-                                 'font-lock-doc-face)))
-        (message "No results"))
+      (if (bing-dict--has-machine-translation-p)
+          (message "Machine translation: %s --> %s" keyword
+                   (propertize (bing-dict--machine-translation)
+                               'face
+                               'font-lock-doc-face))
+        (let ((defs (bing-dict--definitions))
+              query-word
+              pronunciation
+              short-defstr)
+          (if defs
+              (progn
+                (setq
+                 query-word (propertize keyword 'face 'font-lock-keyword-face)
+                 pronunciation (bing-dict--pronunciation)
+                 short-defstr (mapconcat 'identity defs
+                                         (propertize " | "
+                                                     'face
+                                                     'font-lock-builtin-face)))
+                (message "%s %s: %s" query-word pronunciation short-defstr))
+            (let ((sounds-like-words (bing-dict--get-sounds-like-words)))
+              (if sounds-like-words
+                  (message "Sounds like: %s" sounds-like-words)
+                (message "No results"))))))
     (error (message "No results"))))
 
 ;;;###autoload
