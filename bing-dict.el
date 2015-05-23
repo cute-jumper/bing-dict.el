@@ -60,18 +60,17 @@
       (setq retval (replace-regexp-in-string (car elt) (cdr elt) retval)))))
 
 (defun bing-dict--delete-response-header ()
-  (save-excursion
-    (ignore-errors
-      (goto-char (point-min))
-      (delete-region (point-min)
-                     (1+ (re-search-forward "^$" nil t)))
-      (goto-char (point-min)))))
+  (ignore-errors
+    (goto-char (point-min))
+    (delete-region (point-min)
+                   (1+ (re-search-forward "^$" nil t)))
+    (goto-char (point-min))))
 
 (defun bing-dict--pronunciation ()
   (propertize
    (bing-dict--replace-html-entities
     (or
-     (save-excursion
+     (progn
        (goto-char (point-min))
        (if (re-search-forward "<div class=\"hd_prUS" nil t)
            (progn
@@ -89,58 +88,54 @@
 
 (defun bing-dict--definitions ()
   (let (defs)
-    (save-excursion
-      (goto-char (point-min))
-      (while (re-search-forward
-              "span class=\"pos\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
-              nil
-              t)
-        (let ((pos (propertize (match-string-no-properties 1)
-                               'face
-                               'font-lock-doc-face))
-              (def (match-string-no-properties 2)))
-          (push (format "%s %s" pos def) defs)))
-      (goto-char (point-min))
-      (when (re-search-forward
-             "span class=\"pos web\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
-             nil
-             t)
-        (let ((pos (propertize (match-string-no-properties 1)
-                               'face
-                               'font-lock-doc-face))
-              (def (match-string-no-properties 2)))
-          (push (format "%s %s" pos def) defs)))
-      (mapcar 'bing-dict--clean-inner-html (nreverse defs)))))
+    (goto-char (point-min))
+    (while (re-search-forward
+            "span class=\"pos\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
+            nil
+            t)
+      (let ((pos (propertize (match-string-no-properties 1)
+                             'face
+                             'font-lock-doc-face))
+            (def (match-string-no-properties 2)))
+        (push (format "%s %s" pos def) defs)))
+    (goto-char (point-min))
+    (when (re-search-forward
+           "span class=\"pos web\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
+           nil
+           t)
+      (let ((pos (propertize (match-string-no-properties 1)
+                             'face
+                             'font-lock-doc-face))
+            (def (match-string-no-properties 2)))
+        (push (format "%s %s" pos def) defs)))
+    (mapcar 'bing-dict--clean-inner-html (nreverse defs))))
 
 (defun bing-dict--has-machine-translation-p ()
-  (save-excursion
-    (goto-char (point-min))
-    (re-search-forward "div class=\"smt_hw\"" nil t)))
+  (goto-char (point-min))
+  (re-search-forward "div class=\"smt_hw\"" nil t))
 
 (defun bing-dict--machine-translation ()
-  (save-excursion
-    (goto-char (point-min))
-    (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
-      (bing-dict--clean-inner-html (match-string-no-properties 1)))))
+  (goto-char (point-min))
+  (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
+    (bing-dict--clean-inner-html (match-string-no-properties 1))))
 
 (defun bing-dict--get-sounds-like-words ()
-  (let ((similar-words ""))
-    (save-excursion
-      (goto-char (point-min))
-      (when (re-search-forward "div class=\"web_div\">\\(.*?\\)<div class=\"\\(dym_area\\|dymp_sm_top\\)\"" nil t)
-        (let ((content (match-string-no-properties 1)))
-          (with-temp-buffer
-            (insert content)
-            (goto-char (point-min))
-            (while (re-search-forward "<a.*?>\\(.*?\\)</a><div.*?>\\(.*?\\)</div>" nil t)
-              (setq similar-words (concat similar-words
-                                          (propertize (match-string-no-properties 1)
-                                                      'face
-                                                      'font-lock-keyword-face)
-                                          " "
-                                          (match-string-no-properties 2)
-                                          "; ")))
-            similar-words))))))
+  (goto-char (point-min))
+  (when (re-search-forward "div class=\"web_div\">\\(.*?\\)<div class=\"\\(dym_area\\|dymp_sm_top\\)\"" nil t)
+    (let ((similar-words "")
+          (content (match-string-no-properties 1)))
+      (with-temp-buffer
+        (insert content)
+        (goto-char (point-min))
+        (while (re-search-forward "<a.*?>\\(.*?\\)</a><div.*?>\\(.*?\\)</div>" nil t)
+          (setq similar-words (concat similar-words
+                                      (propertize (match-string-no-properties 1)
+                                                  'face
+                                                  'font-lock-keyword-face)
+                                      " "
+                                      (match-string-no-properties 2)
+                                      "; ")))
+        similar-words))))
 
 (defun bing-dict-brief-cb (status keyword)
   (set-buffer-multibyte t)
