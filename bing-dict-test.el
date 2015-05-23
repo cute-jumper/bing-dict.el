@@ -25,11 +25,36 @@
 
 (require 'bing-dict)
 
-(bing-dict-brief "good")
-(bing-dict-brief "good job")
-(bing-dict-brief "That's very hard to do")
-(bing-dict-brief "pronuciation")
-(bing-dict-brief "abcdafgljasd")
-(bing-dict-brief "好")
-(bing-dict-brief "我能吞下玻璃而不伤身体")
-(bing-dict-brief "我能吞下玻璃 而不伤身体")
+(defun bing-dict-brief-sync (word)
+  (save-match-data
+    (with-current-buffer (url-retrieve-synchronously
+                          (concat "http://www.bing.com/dict/search?q="
+                                  (url-hexify-string word)) t t)
+      (bing-dict-brief-cb nil (decode-coding-string word 'utf-8))
+      (substring-no-properties (current-message) 0))))
+
+(ert-deftest bing-dict-brief ()
+  (should
+   (equal (bing-dict-brief-sync "good")
+          "good [ɡʊd]: adv. 好 | n. 好处；好人；益处；善行 | adj. 有好处；好的；优质的；符合标准的 | Web 良好；很好；佳"))
+  (should
+   (equal (bing-dict-brief-sync "good job")
+          "good job : Web 做得好；干得好；干的好"))
+  (should
+   (equal (bing-dict-brief-sync "That's very hard to do")
+          "Machine translation: That's very hard to do --> 这是很难做到的"))
+  (should
+   (equal (bing-dict-brief-sync "pronuciation")
+          "Sounds like: pronunciation 发音; pronunciations 发音; propitiation 和解; penetration 贯穿;透过;渗透力;突破;侵入;浸透;洞察;眼光;贯穿力;透视力;深入敌方的飞行;看破; procreation 生殖;生育;生产; "))
+  (should
+   (equal (bing-dict-brief-sync "abcdafgljasd")
+          "No results"))
+  (should
+   (equal (bing-dict-brief-sync "好")
+          "好 [hǎo] [hào] : adj. good; nice; fine; kind | v. love; like; be fond of; be liable to | adv. so as to; so that | n. a surname | Web OK; well; all right"))
+  (should
+   (equal (bing-dict-brief-sync "我能吞下玻璃而不伤身体")
+          "Machine translation: 我能吞下玻璃而不伤身体 --> I swallowed the glass and not hurt"))
+  (should
+   (equal (bing-dict-brief-sync "我能吞下玻璃 而不伤身体")
+          "Machine translation: 我能吞下玻璃 而不伤身体 --> I swallowed the glass and not hurt")))
