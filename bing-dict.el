@@ -26,6 +26,10 @@
 
 ;; ## Setup
 
+;; You can install via [melpa](http://melpa.org).
+
+;; If installing this package manually:
+
 ;;     (add-to-list 'load-path "/path/to/bing-dict.el")
 ;;     (require 'bing-dict)
 
