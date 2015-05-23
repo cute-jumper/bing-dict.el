@@ -31,7 +31,7 @@
 
 ;; ## Usage
 ;; You can call `bing-dict-brief` to get the explanations of you query. The results
-;; will be shown in the minibuffer.
+;; will be shown in the echo area.
 
 ;; You should probably give this command a key binding:
 
@@ -148,6 +148,7 @@
 
 ;;;###autoload
 (defun bing-dict-brief (&optional word)
+  "Show the explanation of WORD from Bing in the echo area."
   (interactive)
   (unless word
     (setq word

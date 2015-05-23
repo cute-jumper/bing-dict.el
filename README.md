@@ -12,7 +12,7 @@ Support English to Chinese and Chinese to English.
 
 ## Usage
 You can call `bing-dict-brief` to get the explanations of you query. The results
-will be shown in the minibuffer.
+will be shown in the echo area.
 
 Here is the screenshot:
 
