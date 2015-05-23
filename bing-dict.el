@@ -41,6 +41,8 @@
 
 (require 'thingatpt)
 
+(defvar bing-dict-history nil)
+
 (defun bing-dict--replace-html-entities (str)
   (let ((retval str)
         (pair-list
@@ -147,19 +149,23 @@
 ;;;###autoload
 (defun bing-dict-brief (&optional word)
   (interactive)
-  (let ((keyword (or word (read-string
-                           "Search Bing dict: "
-                           (if (use-region-p)
-                               (buffer-substring-no-properties
-                                (region-beginning) (region-end))
-                             (thing-at-point 'word t))))))
-    (save-match-data
-      (url-retrieve (concat "http://www.bing.com/dict/search?q="
-                            (url-hexify-string keyword))
-                    'bing-dict-brief-cb
-                    `(,(decode-coding-string keyword 'utf-8))
-                    t
-                    t))))
+  (unless word
+    (setq word
+          (let* ((default (if (use-region-p)
+                              (buffer-substring-no-properties
+                               (region-beginning) (region-end))
+                            (thing-at-point 'word t)))
+                 (prompt (if (stringp default)
+                             (format "Search Bing dict (default \"%s\"): " default)
+                           "Search Bing dict: ")))
+            (read-string prompt nil 'bing-dict-history default))))
+  (save-match-data
+    (url-retrieve (concat "http://www.bing.com/dict/search?q="
+                          (url-hexify-string word))
+                  'bing-dict-brief-cb
+                  `(,(decode-coding-string word 'utf-8))
+                  t
+                  t)))
 
 (provide 'bing-dict)
 ;;; bing-dict.el ends here
