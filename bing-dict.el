@@ -167,19 +167,18 @@
     (error (message "No results"))))
 
 ;;;###autoload
-(defun bing-dict-brief (&optional word)
+(defun bing-dict-brief (word)
   "Show the explanation of WORD from Bing in the echo area."
-  (interactive)
-  (unless word
-    (setq word
-          (let* ((default (if (use-region-p)
-                              (buffer-substring-no-properties
-                               (region-beginning) (region-end))
-                            (thing-at-point 'word t)))
-                 (prompt (if (stringp default)
-                             (format "Search Bing dict (default \"%s\"): " default)
-                           "Search Bing dict: ")))
-            (read-string prompt nil 'bing-dict-history default))))
+  (interactive
+   (let* ((default (if (use-region-p)
+                       (buffer-substring-no-properties
+                        (region-beginning) (region-end))
+                     (thing-at-point 'word t)))
+          (prompt (if (stringp default)
+                      (format "Search Bing dict (default \"%s\"): " default)
+                    "Search Bing dict: "))
+          (string (read-string prompt nil 'bing-dict-history default)))
+     (list string)))
   (save-match-data
     (url-retrieve (concat "http://www.bing.com/dict/search?q="
                           (url-hexify-string word))
