@@ -175,7 +175,7 @@
           (let* ((default (if (use-region-p)
                               (buffer-substring-no-properties
                                (region-beginning) (region-end))
-                            (thing-at-point 'word t)))
+                            (substring-no-properties (thing-at-point 'word))))
                  (prompt (if (stringp default)
                              (format "Search Bing dict (default \"%s\"): " default)
                            "Search Bing dict: ")))
