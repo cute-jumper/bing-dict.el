@@ -45,7 +45,16 @@
 
 (require 'thingatpt)
 
+(defvar bing-dict-add-to-kill-ring nil
+  "Whether the result should be added to `kill-ring'.")
+
 (defvar bing-dict-history nil)
+
+(defun bing-dict--message (format-string &rest args)
+  (let ((result (apply #'format format-string args)))
+    (when bing-dict-add-to-kill-ring
+      (kill-new result))
+    (message result)))
 
 (defun bing-dict--replace-html-entities (str)
   (let ((retval str)
@@ -142,10 +151,10 @@
   (bing-dict--delete-response-header)
   (condition-case nil
       (if (bing-dict--has-machine-translation-p)
-          (message "Machine translation: %s --> %s" keyword
-                   (propertize (bing-dict--machine-translation)
-                               'face
-                               'font-lock-doc-face))
+          (bing-dict--message "Machine translation: %s --> %s" keyword
+                              (propertize (bing-dict--machine-translation)
+                                          'face
+                                          'font-lock-doc-face))
         (let ((defs (bing-dict--definitions))
               query-word
               pronunciation
@@ -159,12 +168,12 @@
                                          (propertize " | "
                                                      'face
                                                      'font-lock-builtin-face)))
-                (message "%s %s: %s" query-word pronunciation short-defstr))
+                (bing-dict--message "%s %s: %s" query-word pronunciation short-defstr))
             (let ((sounds-like-words (bing-dict--get-sounds-like-words)))
               (if sounds-like-words
-                  (message "Sounds like: %s" sounds-like-words)
-                (message "No results"))))))
-    (error (message "No results"))))
+                  (bing-dict--message "Sounds like: %s" sounds-like-words)
+                (bing-dict--message "No results"))))))
+    (error (bing-dict--message "No results"))))
 
 ;;;###autoload
 (defun bing-dict-brief (word)
