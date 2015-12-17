@@ -26,6 +26,11 @@ You should probably give this command a key binding:
 
     (global-set-key (kbd "C-c d") 'bing-dict-brief)
 
+## Customization
+You can set the value of `bing-dict-add-to-kill-ring` to control whether the
+result should be added to the `kill-ring` or not. By default, the value is
+`nil`. If set to `t`, you are able to use `C-y` to paste the result.
+
 ## As for More Features...
 This extension aims for a quick search for a word. I don't plan to parse all the
 sections of the search results. If you want to view the complete results of your

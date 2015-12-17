@@ -41,6 +41,12 @@
 
 ;;     (global-set-key (kbd "C-c d") 'bing-dict-brief)
 
+;; ## Customization
+;; You can set the value of `bing-dict-add-to-kill-ring` to control whether the
+;; result should be added to the `kill-ring` or not. By default, the value is
+;; `nil`. If set to `t`, the result will be added to the `kill-ring' and you
+;; are able to use `C-y` to paste the result.
+
 ;;; Code:
 
 (require 'thingatpt)
