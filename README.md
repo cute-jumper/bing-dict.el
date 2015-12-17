@@ -29,7 +29,8 @@ You should probably give this command a key binding:
 ## Customization
 You can set the value of `bing-dict-add-to-kill-ring` to control whether the
 result should be added to the `kill-ring` or not. By default, the value is
-`nil`. If set to `t`, you are able to use `C-y` to paste the result.
+`nil`. If set to `t`, the result will be added to the `kill-ring` and you are
+able to use `C-y` to paste the result.
 
 ## As for More Features...
 This extension aims for a quick search for a word. I don't plan to parse all the
