@@ -196,7 +196,7 @@
           (string (read-string prompt nil 'bing-dict-history default)))
      (list string)))
   (save-match-data
-    (url-retrieve (concat "http://www.bing.com/dict/search?q="
+    (url-retrieve (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
                           (url-hexify-string word))
                   'bing-dict-brief-cb
                   `(,(decode-coding-string word 'utf-8))
