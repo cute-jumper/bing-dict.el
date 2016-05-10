@@ -5,6 +5,8 @@
 A **minimalists'** Emacs extension to search http://www.bing.com/dict.
 Support English to Chinese and Chinese to English.
 
+极简主义者的 Emacs 必应词典。 支持中英互译。
+
 ## Setup
 
 You can install via [melpa](http://melpa.org).
