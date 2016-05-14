@@ -41,6 +41,25 @@ query word, I suggest using external browser to do this. The following code
 could partly achieve the goal:
 
     (browse-url
-     (concat "http://www.bing.com/dict/search?q="
+     (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
            (url-hexify-string
             (read-string "Query: "))))
+
+If you prefer to browse inside Emacs, use =eww= instead:
+
+```
+(eww-browse-url
+  (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
+          (url-hexify-string
+           (read-string "Query: "))))
+```
+
+Or open the web page in other window:
+
+```
+(switch-to-buffer-other-window
+ (eww-browse-url
+  (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
+          (url-hexify-string
+           (read-string "Query: ")))))
+```
