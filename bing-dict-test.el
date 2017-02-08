@@ -28,7 +28,7 @@
 (defun bing-dict-brief-sync (word)
   (save-match-data
     (with-current-buffer (url-retrieve-synchronously
-                          (concat "http://www.bing.com/dict/search?q="
+                          (concat bing-dict--base-url
                                   (url-hexify-string word)) t t)
       (bing-dict-brief-cb nil (decode-coding-string word 'utf-8))
       (substring-no-properties (current-message) 0))))

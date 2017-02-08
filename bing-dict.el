@@ -93,6 +93,8 @@
 
 (defvar bing-dict-history nil)
 
+(defvar bing-dict--base-url "http://www.bing.com/dict/search?mkt=zh-cn&q=")
+
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
     (when bing-dict-add-to-kill-ring
@@ -233,7 +235,7 @@
           (string (read-string prompt nil 'bing-dict-history default)))
      (list string)))
   (save-match-data
-    (url-retrieve (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
+    (url-retrieve (concat bing-dict--base-url
                           (url-hexify-string word))
                   'bing-dict-brief-cb
                   `(,(decode-coding-string word 'utf-8))
