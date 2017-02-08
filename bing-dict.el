@@ -164,6 +164,19 @@
         (push (format "%s %s" pos def) defs)))
     (mapcar 'bing-dict--clean-inner-html (nreverse defs))))
 
+(defun bing-dict--thesaurus (head-regexp)
+  (goto-char (point-min))
+  (when (re-search-forward head-regexp nil t)
+    (re-search-forward "div class=\"col_fl\">\\(.*?\\)</div>" nil t)
+    (bing-dict--clean-inner-html
+     (match-string-no-properties 1))))
+
+(defun bing-dict--synonyms ()
+  (bing-dict--thesaurus "div id=\"synoid\""))
+
+(defun bing-dict--antonyms ()
+  (bing-dict--thesaurus "div id=\"antoid\""))
+
 (defun bing-dict--has-machine-translation-p ()
   (goto-char (point-min))
   (re-search-forward "div class=\"smt_hw\"" nil t))
