@@ -33,6 +33,14 @@
       (bing-dict-brief-cb nil (decode-coding-string word 'utf-8))
       (substring-no-properties (current-message) 0))))
 
+(defmacro bing-dict-sync-test-body (word &rest body)
+  (declare (indent 1))
+  `(save-match-data
+     (with-current-buffer (url-retrieve-synchronously
+                           (concat bing-dict--base-url
+                                   (url-hexify-string ,word)) t t)
+       ,@body)))
+
 (ert-deftest bing-dict-brief ()
   (should
    (equal (bing-dict-brief-sync "good")
