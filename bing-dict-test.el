@@ -42,15 +42,17 @@
        ,@body)))
 
 (ert-deftest bing-dict-brief ()
+  (setq bing-dict-pronunciation-style 'us
+        bing-dict-show-thesaurus nil)
   (should
    (equal (bing-dict-brief-sync "good")
-          "good [ɡʊd]: adv. 好 | n. 好处；好人；益处；善行 | adj. 有好处；好的；优质的；符合标准的 | Web 良好；很好；佳"))
+          "good [ɡʊd]: adv. 好 | n. 好处；好人；益处；善行 | adj. 有好处；好的；优质的；符合标准的 | 网络 良好；很好；佳"))
   (should
    (equal (bing-dict-brief-sync "good job")
-          "good job : Web 做得好；干得好；干的好"))
+          "good job : 网络 做得好；干得好；干的好"))
   (should
    (equal (bing-dict-brief-sync "That's very hard to do")
-          "Machine translation: That's very hard to do --> 这是很难做到的"))
+          "Machine translation: That’s very hard to do --> 这是很难做到的"))
   (should
    (equal (bing-dict-brief-sync "pronuciation")
           "Sounds like: pronunciation 发音; pronunciations 发音; propitiation 和解; penetration 贯穿;透过;渗透力;突破;侵入;浸透;洞察;眼光;贯穿力;透视力;深入敌方的飞行;看破; procreation 生殖;生育;生产; "))
@@ -59,13 +61,18 @@
           "No results"))
   (should
    (equal (bing-dict-brief-sync "好")
-          "好 [hǎo] [hào] : adj. good; nice; fine; kind | v. love; like; be fond of; be liable to | adv. so as to; so that | n. a surname | Web OK; well; all right"))
+          "好 [hǎo] [hào] : adj. good; nice; fine; kind | v. love; like; be fond of; be liable to | n. a surname | adv. so as to; so that | 网络 OK; well; all right"))
   (should
    (equal (bing-dict-brief-sync "我能吞下玻璃而不伤身体")
           "Machine translation: 我能吞下玻璃而不伤身体 --> I swallowed the glass and not hurt"))
   (should
    (equal (bing-dict-brief-sync "我能吞下玻璃 而不伤身体")
           "Machine translation: 我能吞下玻璃 而不伤身体 --> I swallowed the glass and not hurt"))
+  (should
+   (equal
+    (let (bing-dict-pronunciation-style)
+      (bing-dict-brief-sync "center"))
+    "center [ˈsentə(r)]: n. 中心；中央；核心；圆心 | v. 居中；把…置于中部；有中心；做中锋 | adj. 中点的 | 网络 居中对齐；中心点"))
   (should
    (equal
     (let ((bing-dict-show-thesaurus 'synonym))
