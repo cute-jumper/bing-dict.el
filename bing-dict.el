@@ -120,6 +120,18 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defvar bing-dict-history nil)
 
 (defvar bing-dict--base-url "http://www.bing.com/dict/search?mkt=zh-cn&q=")
+(defvar bing-dict--no-resul-text (propertize "No results"
+                                             'face
+                                             'font-lock-warning-face))
+(defvar bing-dict--machine-translation-text (propertize "Machine translation"
+                                                        'face
+                                                        'font-lock-builtin-face))
+(defvar bing-dict--sounds-like-text (propertize "Sounds like"
+                                                'face
+                                                'font-lock-builtin-face))
+(defvar bing-dict--seperator (propertize " | "
+                                         'face
+                                         'font-lock-builtin-face))
 
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
@@ -228,7 +240,10 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defun bing-dict--machine-translation ()
   (goto-char (point-min))
   (when (re-search-forward "div class=\"p1-11\">\\(.*?\\)</div>" nil t)
-    (bing-dict--clean-inner-html (match-string-no-properties 1))))
+    (propertize
+     (bing-dict--clean-inner-html (match-string-no-properties 1))
+     'face
+     'font-lock-doc-face)))
 
 (defun bing-dict--get-sounds-like-words ()
   (goto-char (point-min))
@@ -251,14 +266,16 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defun bing-dict-brief-cb (status keyword)
   (set-buffer-multibyte t)
   (bing-dict--delete-response-header)
+  (setq keyword (propertize keyword
+                            'face
+                            'font-lock-keyword-face))
   (condition-case nil
       (if (bing-dict--has-machine-translation-p)
-          (bing-dict--message "Machine translation: %s --> %s" keyword
-                              (propertize (bing-dict--machine-translation)
-                                          'face
-                                          'font-lock-doc-face))
+          (bing-dict--message "%s: %s -> %s"
+                              bing-dict--machine-translation-text
+                              keyword
+                              (bing-dict--machine-translation))
         (let ((defs (bing-dict--definitions))
-              query-word
               extra-defs
               pronunciation
               short-defstr)
@@ -276,18 +293,18 @@ The value could be `synonym', `antonym', `both', or nil.")
                     (when (setq extra-defs (funcall func))
                       (push extra-defs defs)))))
                 (setq
-                 query-word (propertize keyword 'face 'font-lock-keyword-face)
                  pronunciation (bing-dict--pronunciation)
                  short-defstr (mapconcat 'identity (nreverse defs)
-                                         (propertize " | "
-                                                     'face
-                                                     'font-lock-builtin-face)))
-                (bing-dict--message "%s %s: %s" query-word pronunciation short-defstr))
+                                         bing-dict--seperator))
+                (bing-dict--message "%s %s: %s"
+                                    keyword pronunciation short-defstr))
             (let ((sounds-like-words (bing-dict--get-sounds-like-words)))
               (if sounds-like-words
-                  (bing-dict--message "Sounds like: %s" sounds-like-words)
-                (bing-dict--message "No results"))))))
-    (error (bing-dict--message "No results"))))
+                  (bing-dict--message "%s: %s"
+                                      bing-dict--sounds-like-text
+                                      sounds-like-words)
+                (bing-dict--message bing-dict--no-resul-text))))))
+    (error (bing-dict--message bing-dict--no-resul-text))))
 
 ;;;###autoload
 (defun bing-dict-brief (word)

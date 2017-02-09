@@ -52,7 +52,7 @@
           "good job : 网络 做得好；干得好；干的好"))
   (should
    (equal (bing-dict-brief-sync "That's very hard to do")
-          "Machine translation: That’s very hard to do --> 这是很难做到的"))
+          "Machine translation: That’s very hard to do -> 这是很难做到的"))
   (should
    (equal (bing-dict-brief-sync "pronuciation")
           "Sounds like: pronunciation 发音; pronunciations 发音; propitiation 和解; penetration 贯穿;透过;渗透力;突破;侵入;浸透;洞察;眼光;贯穿力;透视力;深入敌方的飞行;看破; procreation 生殖;生育;生产; "))
@@ -64,10 +64,10 @@
           "好 [hǎo] [hào] : adj. good; nice; fine; kind | v. love; like; be fond of; be liable to | n. a surname | adv. so as to; so that | 网络 OK; well; all right"))
   (should
    (equal (bing-dict-brief-sync "我能吞下玻璃而不伤身体")
-          "Machine translation: 我能吞下玻璃而不伤身体 --> I swallowed the glass and not hurt"))
+          "Machine translation: 我能吞下玻璃而不伤身体 -> I swallowed the glass and not hurt"))
   (should
    (equal (bing-dict-brief-sync "我能吞下玻璃 而不伤身体")
-          "Machine translation: 我能吞下玻璃 而不伤身体 --> I swallowed the glass and not hurt"))
+          "Machine translation: 我能吞下玻璃 而不伤身体 -> I swallowed the glass and not hurt"))
   (should
    (equal
     (let (bing-dict-pronunciation-style)
