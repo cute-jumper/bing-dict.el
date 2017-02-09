@@ -97,12 +97,17 @@
 
 (require 'thingatpt)
 
-(defvar bing-dict-add-to-kill-ring nil
-  "Whether the result should be added to `kill-ring'.")
+(defvar bing-dict-pronunciation-style 'us
+  "Pronuciation style.
+If the value is set to be `us', use the US-style pronuciation.
+Otherwise, use the UK-style.")
 
 (defvar bing-dict-show-thesaurus nil
   "Whether to show synonyms, antonyms or not.
 The value could be `synonym', `antonym', `both', or nil.")
+
+(defvar bing-dict-add-to-kill-ring nil
+  "Whether the result should be added to `kill-ring'.")
 
 (defvar bing-dict-history nil)
 
@@ -134,21 +139,25 @@ The value could be `synonym', `antonym', `both', or nil.")
     (goto-char (point-min))))
 
 (defun bing-dict--pronunciation ()
-  (propertize
-   (bing-dict--replace-html-entities
-    (or
-     (progn
-       (goto-char (point-min))
-       (if (re-search-forward "<div class=\"hd_prUS" nil t)
-           (progn
-             (goto-char (point-min))
-             (when (re-search-forward "<div class=\"hd_prUS[^[]*\\(\\[.*?\\]\\)" nil t)
-               (match-string-no-properties 1)))
-         (when (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
-           (match-string-no-properties 1))))
-     ""))
-   'face
-   'font-lock-comment-face))
+  (let ((pron-regexp (concat "<div class=\"hd_pr"
+                             (and (eq bing-dict-pronunciation-style 'us)
+                                  "US")
+                             "\"")))
+    (propertize
+     (bing-dict--replace-html-entities
+      (or
+       (progn
+         (goto-char (point-min))
+         (if (re-search-forward pron-regexp nil t)
+             (progn
+               (goto-char (point-min))
+               (when (re-search-forward (concat pron-regexp "[^[]*\\(\\[.*?\\]\\)") nil t)
+                 (match-string-no-properties 1)))
+           (when (re-search-forward "hd_p1_1\" lang=\"en\">\\(.*?\\)</div" nil t)
+             (match-string-no-properties 1))))
+       ""))
+     'face
+     'font-lock-comment-face)))
 
 (defsubst bing-dict--clean-inner-html (html)
   (replace-regexp-in-string "<.*?>" "" html))
