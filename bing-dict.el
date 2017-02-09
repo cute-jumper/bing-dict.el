@@ -62,6 +62,14 @@
 
 ;; (setq bing-dict-show-thesaurus 'both)
 
+;; The variable `bing-dict-pronunciation-style` controls how the pronunciation is
+;; shown. By default, its value is `'us` and the pronunciation is shown using
+;; "American Phonetic Alphabet" (APA). You can choose the "International Phonetic
+;; Alphabet" (IPA) by setting its value to `'uk` (In fact, any value other than
+;;                                                   `'us` will work):
+
+;; (setq bing-dict-pronunciation-style 'uk)
+
 ;; ## As for More Features...
 ;; This extension aims for a quick search for a word. I don't plan to parse all the
 ;; sections of the search results. If you want to view the complete results of your
