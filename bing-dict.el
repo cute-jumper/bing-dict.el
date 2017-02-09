@@ -187,18 +187,31 @@ The value could be `synonym', `antonym', `both', or nil.")
     (mapcar 'bing-dict--clean-inner-html defs)))
 
 (defun bing-dict--thesaurus (header starting-regexp)
-  (goto-char (point-min))
-  (when (re-search-forward starting-regexp nil t)
-    (re-search-forward "div class=\"col_fl\">\\(.*?\\)</div>" nil t)
-    (format "%s %s" (propertize header 'face 'font-lock-doc-face)
-            (bing-dict--clean-inner-html
-             (match-string-no-properties 1)))))
+  (let (thesaurus)
+    (goto-char (point-min))
+    (when (re-search-forward starting-regexp nil t)
+      (catch 'break
+        (while t
+          (re-search-forward
+           "div class=\"de_title1\">\\(.*?\\)</div><div class=\"col_fl\">\\(.*?\\)</div>"
+           nil t)
+          (push (format "%s %s"
+                        (propertize (match-string-no-properties 1) 'face 'font-lock-string-face)
+                        (bing-dict--clean-inner-html
+                         (match-string-no-properties 2)))
+                thesaurus)
+          (goto-char (match-end 0))
+          (unless (looking-at "</div><div class=\"df_div2\">")
+            (throw 'break t))))
+      (format "%s %s"
+              (propertize header 'face 'font-lock-doc-face)
+              (mapconcat #'identity thesaurus " ")))))
 
 (defun bing-dict--synonyms ()
-  (bing-dict--thesaurus "Synonym:" "div id=\"synoid\""))
+  (bing-dict--thesaurus "Synonym" "div id=\"synoid\""))
 
 (defun bing-dict--antonyms ()
-  (bing-dict--thesaurus "Antonym:" "div id=\"antoid\""))
+  (bing-dict--thesaurus "Antonym" "div id=\"antoid\""))
 
 (defun bing-dict--has-machine-translation-p ()
   (goto-char (point-min))

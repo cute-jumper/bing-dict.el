@@ -76,15 +76,15 @@
   (should
    (equal
     (let ((bing-dict-show-thesaurus 'synonym))
-      (bing-dict-brief-sync "difficult"))
-    "difficult [ˈdɪfɪkəlt]: adj. 困难的；费力的；难做的；难解的 | 网络 艰难的；难以；不易相处的 | Synonym: hard,tricky,complicated,thorny,problematic"))
+      (bing-dict-brief-sync "center"))
+    "center [ˈsentər]: n. 中心；中央；核心；圆心 | v. 居中；把…置于中部；有中心；做中锋 | adj. 中点的 | 网络 居中对齐；中心点 | Synonym n. axis,cluster,complex,downtown v. adjust,arrange,balance,concentrate on,focus on"))
   (should
    (equal
     (let ((bing-dict-show-thesaurus 'antonym))
-      (bing-dict-brief-sync "difficult"))
-    "difficult [ˈdɪfɪkəlt]: adj. 困难的；费力的；难做的；难解的 | 网络 艰难的；难以；不易相处的 | Antonym: easy,simple,amenable"))
+      (bing-dict-brief-sync "center"))
+    "center [ˈsentər]: n. 中心；中央；核心；圆心 | v. 居中；把…置于中部；有中心；做中锋 | adj. 中点的 | 网络 居中对齐；中心点 | Antonym n. coating,edge,extreme,periphery v. ignore"))
   (should
    (equal
     (let ((bing-dict-show-thesaurus 'both))
-      (bing-dict-brief-sync "difficult"))
-    "difficult [ˈdɪfɪkəlt]: adj. 困难的；费力的；难做的；难解的 | 网络 艰难的；难以；不易相处的 | Synonym: hard,tricky,complicated,thorny,problematic | Antonym: easy,simple,amenable")))
+      (bing-dict-brief-sync "center"))
+    "center [ˈsentər]: n. 中心；中央；核心；圆心 | v. 居中；把…置于中部；有中心；做中锋 | adj. 中点的 | 网络 居中对齐；中心点 | Synonym n. axis,cluster,complex,downtown v. adjust,arrange,balance,concentrate on,focus on | Antonym n. coating,edge,extreme,periphery v. ignore")))
