@@ -89,8 +89,8 @@ Or open the web page in other window:
 
 For the second option, you're welcome to contribute to this extension by adding
 more parsers. For example, you could try to add a parser for the "Sample
-Sentences" section. If you're able to write parser to parse many sections, which
-definitely can't be shonw in the echo area, you should probably define a new
-command, maybe called `bing-dict-complete`. I'm totally OK with new commands
-that could present more results, as long as `bing-dict-brief` remains its
-original simplicity.
+Sentences" section. If you're able to write parsers to parse many sections,
+which turns out to be too large to be shown in the echo area, you should
+probably define a new command, maybe called `bing-dict-complete`. I'm totally OK
+with new commands that could present more results, as long as `bing-dict-brief`
+remains its original simplicity.
