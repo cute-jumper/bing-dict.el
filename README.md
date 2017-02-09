@@ -34,10 +34,19 @@ result should be added to the `kill-ring` or not. By default, the value is
 `nil`. If set to `t`, the result will be added to the `kill-ring` and you are
 able to use `C-y` to paste the result.
 
+Also, sometimes synonyms and antonyms could be useful, set
+`bing-dict-show-thesaurus` to control whether you need them or not. The value of
+`bing-dict-show-thesaurus` could be either `nil`, `'synonym`, `'antonym` or
+`'both`. The default value is `nil`. Setting the vaule to `'synonym` or
+`'antonym` only shows the corresponding part, and setting it to `'both` will
+show both synonyms and antonyms at the same time:
+
+    (setq bing-dict-show-thesaurus 'both)
+
 ## As for More Features...
 This extension aims for a quick search for a word. I don't plan to parse all the
 sections of the search results. If you want to view the complete results of your
-query word, I suggest using external browser to do this. The following code
+query word, I suggest using the external browser to do this. The following code
 could partly achieve the goal:
 
     (browse-url
