@@ -51,11 +51,17 @@ Alphabet" (IPA) by setting its value to `'uk` (In fact, any value other than
 
     (setq bing-dict-pronunciation-style 'uk)
 
-## As for More Features...
-This extension aims for a quick search for a word. I don't plan to parse all the
-sections of the search results. If you want to view the complete results of your
-query word, I suggest using the external browser to do this. The following code
-could partly achieve the goal:
+## For Features Requests
+This extension aims for a quick search for a word. Currently this extension only
+parses several sections in the search results and show a brief message in the
+echo area using `bing-dict-brief`. I don't plan to write parsers for all the
+sections of the search results. At least, for `bing-dict-brief`, it should not
+present too much information which may not fit into the echo area.
+
+If you want to view the complete results of your query word, there are two
+options: using the external browser to do this or contributing to the repo by
+adding more parsers. For the first option, the following code could partly
+achieve the goal:
 
     (browse-url
      (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
@@ -80,3 +86,11 @@ Or open the web page in other window:
           (url-hexify-string
            (read-string "Query: ")))))
 ```
+
+For the second option, you're welcome to contribute to this extension by adding
+more parsers. For example, you could try to add a parser for the "Sample
+Sentences" section. If you're able to write parser to parse many sections, which
+definitely can't be shonw in the echo area, you should probably define a new
+command, maybe called `bing-dict-complete`. I'm totally OK with new commands
+that could present more results, as long as `bing-dict-brief` remains its
+original simplicity.
