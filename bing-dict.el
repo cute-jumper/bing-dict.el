@@ -91,7 +91,13 @@
 (defvar bing-dict-add-to-kill-ring nil
   "Whether the result should be added to `kill-ring'.")
 
+(defvar bing-dict-show-thesaurus nil
+  "Whether to show synonyms, antonyms or not.
+The value could be `synonym', `antonym', `both', or nil.")
+
 (defvar bing-dict-history nil)
+
+(defvar bing-dict--base-url "http://www.bing.com/dict/search?mkt=zh-cn&q=")
 
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
@@ -160,7 +166,21 @@
                              'font-lock-doc-face))
             (def (match-string-no-properties 2)))
         (push (format "%s %s" pos def) defs)))
-    (mapcar 'bing-dict--clean-inner-html (nreverse defs))))
+    (mapcar 'bing-dict--clean-inner-html defs)))
+
+(defun bing-dict--thesaurus (header starting-regexp)
+  (goto-char (point-min))
+  (when (re-search-forward starting-regexp nil t)
+    (re-search-forward "div class=\"col_fl\">\\(.*?\\)</div>" nil t)
+    (format "%s %s" (propertize header 'face 'font-lock-doc-face)
+            (bing-dict--clean-inner-html
+             (match-string-no-properties 1)))))
+
+(defun bing-dict--synonyms ()
+  (bing-dict--thesaurus "Synonym:" "div id=\"synoid\""))
+
+(defun bing-dict--antonyms ()
+  (bing-dict--thesaurus "Antonym:" "div id=\"antoid\""))
 
 (defun bing-dict--has-machine-translation-p ()
   (goto-char (point-min))
@@ -200,14 +220,26 @@
                                           'font-lock-doc-face))
         (let ((defs (bing-dict--definitions))
               query-word
+              extra-defs
               pronunciation
               short-defstr)
           (if defs
               (progn
+                (cond
+                 ((eq bing-dict-show-thesaurus 'synonym)
+                  (when (setq extra-defs (bing-dict--synonyms))
+                    (push extra-defs defs)))
+                 ((eq bing-dict-show-thesaurus 'antonym)
+                  (when (setq extra-defs (bing-dict--antonyms))
+                    (push extra-defs defs)))
+                 ((eq bing-dict-show-thesaurus 'both)
+                  (dolist (func '(bing-dict--synonyms bing-dict--antonyms))
+                    (when (setq extra-defs (funcall func))
+                      (push extra-defs defs)))))
                 (setq
                  query-word (propertize keyword 'face 'font-lock-keyword-face)
                  pronunciation (bing-dict--pronunciation)
-                 short-defstr (mapconcat 'identity defs
+                 short-defstr (mapconcat 'identity (nreverse defs)
                                          (propertize " | "
                                                      'face
                                                      'font-lock-builtin-face)))
@@ -233,7 +265,7 @@
           (string (read-string prompt nil 'bing-dict-history default)))
      (list string)))
   (save-match-data
-    (url-retrieve (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
+    (url-retrieve (concat bing-dict--base-url
                           (url-hexify-string word))
                   'bing-dict-brief-cb
                   `(,(decode-coding-string word 'utf-8))

@@ -28,10 +28,18 @@
 (defun bing-dict-brief-sync (word)
   (save-match-data
     (with-current-buffer (url-retrieve-synchronously
-                          (concat "http://www.bing.com/dict/search?q="
+                          (concat bing-dict--base-url
                                   (url-hexify-string word)) t t)
       (bing-dict-brief-cb nil (decode-coding-string word 'utf-8))
       (substring-no-properties (current-message) 0))))
+
+(defmacro bing-dict-sync-test-body (word &rest body)
+  (declare (indent 1))
+  `(save-match-data
+     (with-current-buffer (url-retrieve-synchronously
+                           (concat bing-dict--base-url
+                                   (url-hexify-string ,word)) t t)
+       ,@body)))
 
 (ert-deftest bing-dict-brief ()
   (should
@@ -57,4 +65,19 @@
           "Machine translation: 我能吞下玻璃而不伤身体 --> I swallowed the glass and not hurt"))
   (should
    (equal (bing-dict-brief-sync "我能吞下玻璃 而不伤身体")
-          "Machine translation: 我能吞下玻璃 而不伤身体 --> I swallowed the glass and not hurt")))
+          "Machine translation: 我能吞下玻璃 而不伤身体 --> I swallowed the glass and not hurt"))
+  (should
+   (equal
+    (let ((bing-dict-show-thesaurus 'synonym))
+      (bing-dict-brief-sync "difficult"))
+    "difficult [ˈdɪfɪkəlt]: adj. 困难的；费力的；难做的；难解的 | 网络 艰难的；难以；不易相处的 | Synonym: hard,tricky,complicated,thorny,problematic"))
+  (should
+   (equal
+    (let ((bing-dict-show-thesaurus 'antonym))
+      (bing-dict-brief-sync "difficult"))
+    "difficult [ˈdɪfɪkəlt]: adj. 困难的；费力的；难做的；难解的 | 网络 艰难的；难以；不易相处的 | Antonym: easy,simple,amenable"))
+  (should
+   (equal
+    (let ((bing-dict-show-thesaurus 'both))
+      (bing-dict-brief-sync "difficult"))
+    "difficult [ˈdɪfɪkəlt]: adj. 困难的；费力的；难做的；难解的 | 网络 艰难的；难以；不易相处的 | Synonym: hard,tricky,complicated,thorny,problematic | Antonym: easy,simple,amenable")))
