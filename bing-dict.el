@@ -133,8 +133,51 @@ The value could be `synonym', `antonym', `both', or nil.")
                                          'face
                                          'font-lock-builtin-face))
 
+(defvar bing-dict--org-file "~/.orgs/vocabulary.org"
+  "The file where store the vocabulary.")
+
+(defvar bing-dict--org-file-title "Vocabulary"
+  "The title of the vocabulary org file.")
+
+(defvar bing-dict--save-search-result nil
+  "save bing dict search result or not.")
+
+
+(defun bing-dict--tidy-headlines ()
+  "remove extra spaces between stars and the headline text"
+  (save-excursion
+    (goto-char (point-min))
+    (while (re-search-forward "^\\*+\\([[:space:]][[:space:]]+\\)" (point-max) t)
+      (replace-match " " nil nil nil 1))))
+
+(defun bing-dict--save-word (word definition)
+  "save word in org file"
+  ;; (interactive "sWord: \nsDefinition: ")
+  (find-file bing-dict--org-file)
+  (bing-dict--tidy-headlines)
+  (goto-char (point-min))
+
+  (unless (re-search-forward (concat "^\\* " bing-dict--org-file-title) (point-max) t)
+    (beginning-of-line)
+    (org-insert-heading)
+    (insert bing-dict--org-file-title)
+    (goto-char (point-min)))
+
+  (end-of-line)
+  (org-insert-subheading t)
+  (insert word)
+  (newline)
+  (insert definition))
+
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
+    (when bing-dict--save-search-result
+      (let ((plain-result (substring-no-properties result)))
+        (unless (string-match "Sounds like" plain-result)
+          (let ((word (car (split-string plain-result ": ")))
+                (definition (nth 1 (split-string plain-result ": "))))
+            (when (and word definition)
+              (bing-dict--save-word word definition))))))
     (when bing-dict-add-to-kill-ring
       (kill-new result))
     (message result)))
