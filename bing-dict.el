@@ -152,7 +152,6 @@ The value could be `synonym', `antonym', `both', or nil.")
 
 (defun bing-dict--save-word (word definition)
   "save word in org file"
-  ;; (interactive "sWord: \nsDefinition: ")
   (find-file bing-dict--org-file)
   (bing-dict--tidy-headlines)
   (goto-char (point-min))
