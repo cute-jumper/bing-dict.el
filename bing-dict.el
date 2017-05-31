@@ -152,7 +152,6 @@ The value could be `synonym', `antonym', `both', or nil.")
 
 (defun bing-dict--save-word (word definition)
   "save word in org file. If there is already the same word, ignore it."
-  (interactive)
   (unless (file-exists-p bing-dict-org-file)
     (make-directory (file-name-directory bing-dict-org-file) t)
     (write-region "" nil bing-dict-org-file))
