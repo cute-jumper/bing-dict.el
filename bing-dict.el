@@ -133,13 +133,13 @@ The value could be `synonym', `antonym', `both', or nil.")
                                          'face
                                          'font-lock-builtin-face))
 
-(defvar bing-dict--org-file "~/.orgs/vocabulary.org"
+(defvar bing-dict-org-file (expand-file-name "bing-dict/vocabulary.org" user-emacs-directory)
   "The file where store the vocabulary.")
 
-(defvar bing-dict--org-file-title "Vocabulary"
+(defvar bing-dict-org-file-title "Vocabulary"
   "The title of the vocabulary org file.")
 
-(defvar bing-dict--save-search-result nil
+(defvar bing-dict-save-search-result nil
   "save bing dict search result or not.")
 
 
@@ -151,28 +151,37 @@ The value could be `synonym', `antonym', `both', or nil.")
       (replace-match " " nil nil nil 1))))
 
 (defun bing-dict--save-word (word definition)
-  "save word in org file"
-  (find-file bing-dict--org-file)
-  (bing-dict--tidy-headlines)
-  (goto-char (point-min))
+  "save word in org file. If there is already the same word, ignore it."
+  (interactive)
+  (unless (file-exists-p bing-dict-org-file)
+    (make-directory (file-name-directory bing-dict-org-file) t)
+    (write-region "" nil bing-dict-org-file))
 
-  (unless (re-search-forward (concat "^\\* " bing-dict--org-file-title) (point-max) t)
-    (beginning-of-line)
-    (org-insert-heading)
-    (insert bing-dict--org-file-title)
-    (goto-char (point-min)))
+  (let ((origin-content (with-temp-buffer
+                          (insert-file-contents bing-dict-org-file)
+                          (buffer-substring-no-properties (point-min) (point-max)))))
 
-  (end-of-line)
-  (org-insert-subheading t)
-  (insert word)
-  (newline)
-  (insert definition)
-  (save-buffer)
-  (kill-buffer (current-buffer)))
+    (with-temp-file bing-dict-org-file
+      (org-mode)
+      (insert origin-content)
+      (goto-char (point-min))
+
+      (unless (re-search-forward (concat "^\\* " bing-dict-org-file-title) (point-max) t)
+        (beginning-of-line)
+        (org-insert-heading)
+        (insert bing-dict-org-file-title)
+        (goto-char (point-min)))
+
+      (unless (re-search-forward (concat "^\\*+ " (car (split-string word))) (point-max) t)
+        (end-of-line)
+        (org-insert-subheading t)
+        (insert word)
+        (newline)
+        (insert definition)))))
 
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
-    (when bing-dict--save-search-result
+    (when bing-dict-save-search-result
       (let ((plain-result (substring-no-properties result)))
         (unless (string-match "Sounds like" plain-result)
           (let ((word (car (split-string plain-result ": ")))
