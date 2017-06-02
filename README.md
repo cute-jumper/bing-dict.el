@@ -22,7 +22,7 @@ will be shown in the echo area.
 
 Here is the screenshot:
 
-![bing-dict-screenshot](./screenshot.png)
+![bing-dict-screenshot1](./screenshot1.png)
 
 You should probably give this command a key binding:
 
@@ -55,6 +55,10 @@ You can also build your own vocabulary:
 
     (setq bing-dict-save-search-result t)
     (setq bing-dict-org-file "your/path/your_vocabulary.org")
+
+screenshot:
+
+![bing-dict-screenshot2](./screenshot2.png)
 
 ## For Features Requests
 This extension aims for a quick search for a word. Currently this extension only
