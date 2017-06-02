@@ -117,6 +117,20 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defvar bing-dict-add-to-kill-ring nil
   "Whether the result should be added to `kill-ring'.")
 
+(defvar bing-dict-org-file (expand-file-name "bing-dict/vocabulary.org" user-emacs-directory)
+  "The file where store the vocabulary.")
+
+(defvar bing-dict-org-file-title "Vocabulary"
+  "The title of the vocabulary org file.")
+
+(defvar bing-dict-save-search-result nil
+  "Save bing dict search result or not.")
+
+
+(eval-when-compile
+  (declare-function org-insert-heading "org")
+  (declare-function org-insert-subheading "org"))
+
 (defvar bing-dict-history nil)
 
 (defvar bing-dict--base-url "http://www.bing.com/dict/search?mkt=zh-cn&q=")
@@ -133,25 +147,15 @@ The value could be `synonym', `antonym', `both', or nil.")
                                          'face
                                          'font-lock-builtin-face))
 
-(defvar bing-dict-org-file (expand-file-name "bing-dict/vocabulary.org" user-emacs-directory)
-  "The file where store the vocabulary.")
-
-(defvar bing-dict-org-file-title "Vocabulary"
-  "The title of the vocabulary org file.")
-
-(defvar bing-dict-save-search-result nil
-  "save bing dict search result or not.")
-
-
 (defun bing-dict--tidy-headlines ()
-  "remove extra spaces between stars and the headline text"
+  "Remove extra spaces between stars and the headline text."
   (save-excursion
     (goto-char (point-min))
     (while (re-search-forward "^\\*+\\([[:space:]][[:space:]]+\\)" (point-max) t)
       (replace-match " " nil nil nil 1))))
 
 (defun bing-dict--save-word (word definition)
-  "save word in org file. If there is already the same word, ignore it."
+  "Save WORD and DEFINITION in org file.  If there is already the same WORD, ignore it."
   (unless (file-exists-p bing-dict-org-file)
     (make-directory (file-name-directory bing-dict-org-file) t)
     (write-region "" nil bing-dict-org-file))
