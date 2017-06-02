@@ -51,6 +51,11 @@ Alphabet" (IPA) by setting its value to `'uk` (In fact, any value other than
 
     (setq bing-dict-pronunciation-style 'uk)
 
+You can also build your own vocabulary:
+
+    (setq bing-dict-save-search-result t)
+    (setq bing-dict-org-file "your/path/your_vocabulary.org")
+
 ## For Features Requests
 This extension aims for a quick search for a word. Currently this extension only
 parses several sections in the search results and show a brief message in the
