@@ -41,7 +41,7 @@
 
 ;; Here is the screenshot:
 
-;; ![bing-dict-screenshot](./screenshot.png)
+;; ![bing-dict-screenshot1](./screenshot1.png)
 
 ;; You should probably give this command a key binding:
 
@@ -60,21 +60,42 @@
 ;; `'antonym` only shows the corresponding part, and setting it to `'both` will
 ;; show both synonyms and antonyms at the same time:
 
-;; (setq bing-dict-show-thesaurus 'both)
+;;     (setq bing-dict-show-thesaurus 'both)
 
 ;; The variable `bing-dict-pronunciation-style` controls how the pronunciation is
 ;; shown. By default, its value is `'us` and the pronunciation is shown using
 ;; "American Phonetic Alphabet" (APA). You can choose the "International Phonetic
 ;; Alphabet" (IPA) by setting its value to `'uk` (In fact, any value other than
-;;                                                   `'us` will work):
+;; `'us` will work):
 
-;; (setq bing-dict-pronunciation-style 'uk)
+;;     (setq bing-dict-pronunciation-style 'uk)
 
-;; ## As for More Features...
-;; This extension aims for a quick search for a word. I don't plan to parse all the
-;; sections of the search results. If you want to view the complete results of your
-;; query word, I suggest using the external browser to do this. The following code
-;; could partly achieve the goal:
+;; You can also build your own vocabulary by saving all your queries and their
+;; results into `bing-dict-org-file` (which points to
+;; `~/.emacs.d/bing-dict/vocabulary.org` by default):
+
+;;     (setq bing-dict-save-search-result t)
+
+;; By setting `bing-dict-org-file`, you can change where all the queries and
+;; results are saved:
+
+;;     (setq bing-dict-org-file "/path/to/your_vocabulary.org")
+
+;; screenshot:
+
+;; ![bing-dict-screenshot2](./screenshot2.png)
+
+;; ## For Features Requests
+;; This extension aims for a quick search for a word. Currently this extension only
+;; parses several sections in the search results and show a brief message in the
+;; echo area using `bing-dict-brief`. I don't plan to write parsers for all the
+;; sections of the search results. At least, for `bing-dict-brief`, it should not
+;; present too much information which may not fit into the echo area.
+
+;; If you want to view the complete results of your query word, there are two
+;; options: using the external browser to do this or contributing to the repo by
+;; adding more parsers. For the first option, the following code could partly
+;; achieve the goal:
 
 ;;     (browse-url
 ;;      (concat "http://www.bing.com/dict/search?mkt=zh-cn&q="
@@ -99,7 +120,15 @@
 ;;           (url-hexify-string
 ;;            (read-string "Query: ")))))
 ;; ```
-;;
+
+;; For the second option, you're welcome to contribute to this extension by adding
+;; more parsers. For example, you could try to add a parser for the "Sample
+;; Sentences" section. If you're able to write parsers to parse many sections,
+;; which turns out to be too large to be shown in the echo area, you should
+;; probably define a new command, maybe called `bing-dict-complete`. I'm totally OK
+;; with new commands that could present more results, as long as `bing-dict-brief`
+;; remains its original simplicity.
+
 
 ;;; Code:
 
