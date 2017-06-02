@@ -126,6 +126,8 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defvar bing-dict-save-search-result nil
   "Save bing dict search result or not.")
 
+(defvar bing-dict-word-def-separator ": "
+  "Seperator used between the word and the definition.")
 
 (eval-when-compile
   (declare-function org-insert-heading "org")
@@ -143,7 +145,7 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defvar bing-dict--sounds-like-text (propertize "Sounds like"
                                                 'face
                                                 'font-lock-builtin-face))
-(defvar bing-dict--seperator (propertize " | "
+(defvar bing-dict--separator (propertize " | "
                                          'face
                                          'font-lock-builtin-face))
 
@@ -151,46 +153,45 @@ The value could be `synonym', `antonym', `both', or nil.")
   "Remove extra spaces between stars and the headline text."
   (save-excursion
     (goto-char (point-min))
-    (while (re-search-forward "^\\*+\\([[:space:]][[:space:]]+\\)" (point-max) t)
+    (while (re-search-forward "^\\*+\\([[:space:]][[:space:]]+\\)" nil t)
       (replace-match " " nil nil nil 1))))
 
 (defun bing-dict--save-word (word definition)
   "Save WORD and DEFINITION in org file.  If there is already the same WORD, ignore it."
-  (unless (file-exists-p bing-dict-org-file)
-    (make-directory (file-name-directory bing-dict-org-file) t)
-    (write-region "" nil bing-dict-org-file))
-
-  (let ((origin-content (with-temp-buffer
-                          (insert-file-contents bing-dict-org-file)
-                          (buffer-substring-no-properties (point-min) (point-max)))))
-
-    (with-temp-file bing-dict-org-file
-      (org-mode)
-      (insert origin-content)
-      (goto-char (point-min))
-
-      (unless (re-search-forward (concat "^\\* " bing-dict-org-file-title) (point-max) t)
-        (beginning-of-line)
-        (org-insert-heading)
-        (insert bing-dict-org-file-title)
-        (goto-char (point-min)))
-
-      (unless (re-search-forward (concat "^\\*+ " (car (split-string word))) (point-max) t)
-        (end-of-line)
-        (org-insert-subheading t)
-        (insert word)
-        (newline)
-        (insert definition)))))
+  (let ((dir (file-name-directory bing-dict-org-file)))
+    (unless (file-exists-p dir)
+      (make-directory dir t)))
+  (with-temp-buffer
+    (when (file-exists-p bing-dict-org-file)
+      (insert-file-contents bing-dict-org-file))
+    (org-mode)
+    (goto-char (point-min))
+    (unless (re-search-forward (concat "^\\* " bing-dict-org-file-title) nil t)
+      (beginning-of-line)
+      (org-insert-heading)
+      (insert bing-dict-org-file-title)
+      (goto-char (point-min)))
+    (unless (re-search-forward (concat "^\\*+ " (car (split-string word))) nil t)
+      (end-of-line)
+      (org-insert-subheading t)
+      (insert word)
+      (newline)
+      (insert definition))
+    (write-region nil nil bing-dict-org-file)))
 
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
     (when bing-dict-save-search-result
       (let ((plain-result (substring-no-properties result)))
-        (unless (string-match "Sounds like" plain-result)
-          (let ((word (car (split-string plain-result ": ")))
-                (definition (nth 1 (split-string plain-result ": "))))
-            (when (and word definition)
-              (bing-dict--save-word word definition))))))
+        (unless (or (string-match bing-dict--sounds-like-text plain-result)
+                    (string-match bing-dict--no-resul-text plain-result))
+          (let ((word (car (split-string plain-result
+                                         bing-dict-word-def-separator)))
+                (definition (nth 1 (split-string plain-result
+                                                 bing-dict-word-def-separator))))
+            (and word
+                 definition
+                 (bing-dict--save-word word definition))))))
     (when bing-dict-add-to-kill-ring
       (kill-new result))
     (message result)))
@@ -327,8 +328,9 @@ The value could be `synonym', `antonym', `both', or nil.")
                             'font-lock-keyword-face))
   (condition-case nil
       (if (bing-dict--has-machine-translation-p)
-          (bing-dict--message "%s: %s -> %s"
+          (bing-dict--message "%s%s%s -> %s"
                               bing-dict--machine-translation-text
+                              bing-dict-word-def-separator
                               keyword
                               (bing-dict--machine-translation))
         (let ((defs (bing-dict--definitions))
@@ -351,13 +353,17 @@ The value could be `synonym', `antonym', `both', or nil.")
                 (setq
                  pronunciation (bing-dict--pronunciation)
                  short-defstr (mapconcat 'identity (nreverse defs)
-                                         bing-dict--seperator))
-                (bing-dict--message "%s %s: %s"
-                                    keyword pronunciation short-defstr))
+                                         bing-dict--separator))
+                (bing-dict--message "%s %s%s%s"
+                                    keyword
+                                    pronunciation
+                                    bing-dict-word-def-separator
+                                    short-defstr))
             (let ((sounds-like-words (bing-dict--get-sounds-like-words)))
               (if sounds-like-words
-                  (bing-dict--message "%s: %s"
+                  (bing-dict--message "%s%s%s"
                                       bing-dict--sounds-like-text
+                                      bing-dict-word-def-separator
                                       sounds-like-words)
                 (bing-dict--message bing-dict--no-resul-text))))))
     (error (bing-dict--message bing-dict--no-resul-text))))
