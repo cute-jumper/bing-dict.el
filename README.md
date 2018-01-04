@@ -52,19 +52,25 @@ Alphabet" (IPA) by setting its value to `'uk` (In fact, any value other than
     (setq bing-dict-pronunciation-style 'uk)
 
 You can also build your own vocabulary by saving all your queries and their
-results into `bing-dict-org-file` (which points to
-`~/.emacs.d/bing-dict/vocabulary.org` by default):
+results into `bing-dict-vocabulary-save` (which points to
+`~/.emacs.d/var/bing-dict/vocabulary.org` by default):
 
-    (setq bing-dict-save-search-result t)
+    (setq bing-dict-vocabulary-save t)
 
-By setting `bing-dict-org-file`, you can change where all the queries and
+By setting `bing-dict-vocabulary-file`, you can change where all the queries and
 results are saved:
 
-    (setq bing-dict-org-file "/path/to/your_vocabulary.org")
+    (setq bing-dict-vocabulary-file "/path/to/your_vocabulary.org")
 
 screenshot:
 
 ![bing-dict-screenshot2](./screenshot2.png)
+
+By default, bing-dict.el will cache all your queries and results into
+`bing-dict-cache-file`(which points to
+`~/.emacs.d/var/bing-dict/bing-dict-save.el` by default):
+
+    (setq bing-dict-cache-auto-save t)
 
 ## For Features Requests
 This extension aims for a quick search for a word. Currently this extension only
