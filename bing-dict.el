@@ -133,6 +133,7 @@
 ;;; Code:
 
 (require 'thingatpt)
+(require 'bing-dict-cache)
 
 (defvar bing-dict-pronunciation-style 'us
   "Pronuciation style.
@@ -154,15 +155,6 @@ The value could be `synonym', `antonym', `both', or nil.")
 
 (defvar bing-dict-vocabulary-save nil
   "Save bing dict search result build vocabulary or not.")
-
-(defvar bing-dict-cache-auto-save t
-  "Whether to save the bing dict cache when leaving emacs.")
-
-(defvar bing-dict--cache nil
-  "It will be used when offline, its type is a hash table")
-
-(defvar bing-dict-cache-file (expand-file-name "var/bing-dict/bing-dict-save.el" user-emacs-directory)
-  "It is where cache will be stored")
 
 (defvar bing-dict-word-def-separator ": "
   "Seperator used between the word and the definition.")
@@ -217,36 +209,6 @@ The value could be `synonym', `antonym', `both', or nil.")
       (insert definition))
     (write-region nil nil bing-dict-vocabulary-file)))
 
-(defun bing-dict--cache-init ()
-  "Initialize bing dict."
-  (setq bing-dict--cache (make-hash-table :test #'equal)))
-
-(defun bing-dict--cache-initialized-p ()
-  (hash-table-p bing-dict--cache))
-
-(defun bing-dict--cache-load ()
-  (let ((dir (file-name-directory bing-dict-cache-file)))
-    (make-directory dir t))
-  (load bing-dict-cache-file 'noerror nil 'nosuffix))
-
-(defun bing-dict--cache-save ()
-  "Save bing dict cache."
-  (with-temp-buffer
-    (set-buffer-multibyte nil)
-    ;; save `bing-dict--cache' as S-expression
-    (let (print-level print-length)
-      (encode-coding-string
-       (format "%S" `(setq bing-dict--cache ,bing-dict--cache))
-       'utf-8
-       nil
-       (current-buffer))
-      (let ((coding-system-for-write 'binary))
-        (write-region nil nil  bing-dict-cache-file)))))
-
-(defun bing-dict--maybe-save ()
-  (when (and (bing-dict--cache-initialized-p) bing-dict-cache-auto-save)
-    (bing-dict--cache-save)))
-
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
     (let ((plain-result (substring-no-properties result)))
@@ -267,7 +229,12 @@ The value could be `synonym', `antonym', `both', or nil.")
         (when bing-dict-cache-auto-save
           ;; because we only support word: definition, so the first of args is the keyword
           (let ((word (substring-no-properties (car args))))
-            (puthash word result bing-dict--cache)))))
+            (puthash word
+                     ;; key   : word
+                     ;; value : (result-with-properties . seconds)
+                     (cons result (time-to-seconds))
+                     bing-dict--cache))
+          (bing-dict--update-cache))))
 
     ;; add result to the `kill-ring' or not
     (when bing-dict-add-to-kill-ring
@@ -465,15 +432,21 @@ The value could be `synonym', `antonym', `both', or nil.")
     (or (bing-dict--cache-load)
         (bing-dict--cache-init)))
 
-  (if (gethash word bing-dict--cache)
-      (message (gethash word bing-dict--cache))
-    (save-match-data
-      (url-retrieve (concat bing-dict--base-url
-                            (url-hexify-string word))
-                    'bing-dict-brief-cb
-                    `(,(decode-coding-string word 'utf-8))
-                    t
-                    t))))
+  (let ((cached-result (car (gethash word bing-dict--cache))))
+    (if (gethash word bing-dict--cache)
+        (progn
+          ;; update cached-result's time
+          (puthash word
+                   (cons cached-result (time-to-seconds))
+                   bing-dict--cache)
+          (message cached-result))
+      (save-match-data
+        (url-retrieve (concat bing-dict--base-url
+                              (url-hexify-string word))
+                      'bing-dict-brief-cb
+                      `(,(decode-coding-string word 'utf-8))
+                      t
+                      t)))))
 
 (add-hook 'kill-emacs-hook 'bing-dict--maybe-save)
 
