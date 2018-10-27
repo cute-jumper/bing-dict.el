@@ -133,6 +133,7 @@
 ;;; Code:
 
 (require 'thingatpt)
+(require 'bing-dict-cache)
 
 (defvar bing-dict-pronunciation-style 'us
   "Pronuciation style.
@@ -146,14 +147,14 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defvar bing-dict-add-to-kill-ring nil
   "Whether the result should be added to `kill-ring'.")
 
-(defvar bing-dict-org-file (expand-file-name "bing-dict/vocabulary.org" user-emacs-directory)
+(defvar bing-dict-vocabulary-file (expand-file-name "var/bing-dict/vocabulary.org" user-emacs-directory)
   "The file where store the vocabulary.")
 
-(defvar bing-dict-org-file-title "Vocabulary"
+(defvar bing-dict-vocabulary-file-title "Vocabulary"
   "The title of the vocabulary org file.")
 
-(defvar bing-dict-save-search-result nil
-  "Save bing dict search result or not.")
+(defvar bing-dict-vocabulary-save nil
+  "Save bing dict search result build vocabulary or not.")
 
 (defvar bing-dict-word-def-separator ": "
   "Seperator used between the word and the definition.")
@@ -165,9 +166,9 @@ The value could be `synonym', `antonym', `both', or nil.")
 (defvar bing-dict-history nil)
 
 (defvar bing-dict--base-url "http://www.bing.com/dict/search?mkt=zh-cn&q=")
-(defvar bing-dict--no-resul-text (propertize "No results"
-                                             'face
-                                             'font-lock-warning-face))
+(defvar bing-dict--no-result-text (propertize "No results"
+                                              'face
+                                              'font-lock-warning-face))
 (defvar bing-dict--machine-translation-text (propertize "Machine translation"
                                                         'face
                                                         'font-lock-builtin-face))
@@ -187,18 +188,18 @@ The value could be `synonym', `antonym', `both', or nil.")
 
 (defun bing-dict--save-word (word definition)
   "Save WORD and DEFINITION in org file.  If there is already the same WORD, ignore it."
-  (let ((dir (file-name-directory bing-dict-org-file)))
+  (let ((dir (file-name-directory bing-dict-vocabulary-file)))
     (unless (file-exists-p dir)
       (make-directory dir t)))
   (with-temp-buffer
-    (when (file-exists-p bing-dict-org-file)
-      (insert-file-contents bing-dict-org-file))
+    (when (file-exists-p bing-dict-vocabulary-file)
+      (insert-file-contents bing-dict-vocabulary-file))
     (org-mode)
     (goto-char (point-min))
-    (unless (re-search-forward (concat "^\\* " bing-dict-org-file-title) nil t)
+    (unless (re-search-forward (concat "^\\* " bing-dict-vocabulary-file-title) nil t)
       (beginning-of-line)
       (org-insert-heading)
-      (insert bing-dict-org-file-title)
+      (insert bing-dict-vocabulary-file-title)
       (goto-char (point-min)))
     (unless (re-search-forward (concat "^\\*+ \\b" (car (split-string word)) "\\b") nil t)
       (end-of-line)
@@ -206,21 +207,36 @@ The value could be `synonym', `antonym', `both', or nil.")
       (insert word)
       (newline)
       (insert definition))
-    (write-region nil nil bing-dict-org-file)))
+    (write-region nil nil bing-dict-vocabulary-file)))
 
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
-    (when bing-dict-save-search-result
-      (let ((plain-result (substring-no-properties result)))
-        (unless (or (string-match bing-dict--sounds-like-text plain-result)
-                    (string-match bing-dict--no-resul-text plain-result))
+    (let ((plain-result (substring-no-properties result)))
+      ;; we only handle word: definition
+      (unless (or (bing-dict--has-machine-translation-p)
+                  (string-match bing-dict--sounds-like-text plain-result)
+                  (string-match bing-dict--no-result-text plain-result))
+
+        ;; build own vocabulary book or not
+        (when bing-dict-vocabulary-save
           (let ((word (car (split-string plain-result
                                          bing-dict-word-def-separator)))
                 (definition (nth 1 (split-string plain-result
                                                  bing-dict-word-def-separator))))
-            (and word
-                 definition
-                 (bing-dict--save-word word definition))))))
+            (bing-dict--save-word word definition)))
+
+        ;; auto save cache or not
+        (when bing-dict-cache-auto-save
+          ;; because we only support word: definition, so the first of args is the keyword
+          (let ((word (substring-no-properties (car args))))
+            (puthash word
+                     ;; key   : word
+                     ;; value : (result-with-properties . seconds)
+                     (cons result (time-to-seconds))
+                     bing-dict--cache))
+          (bing-dict--update-cache))))
+
+    ;; add result to the `kill-ring' or not
     (when bing-dict-add-to-kill-ring
       (kill-new result))
     (message result)))
@@ -394,8 +410,8 @@ The value could be `synonym', `antonym', `both', or nil.")
                                       bing-dict--sounds-like-text
                                       bing-dict-word-def-separator
                                       sounds-like-words)
-                (bing-dict--message bing-dict--no-resul-text))))))
-    (error (bing-dict--message bing-dict--no-resul-text))))
+                (bing-dict--message bing-dict--no-result-text))))))
+    (error (bing-dict--message bing-dict--no-result-text))))
 
 ;;;###autoload
 (defun bing-dict-brief (word)
@@ -411,13 +427,28 @@ The value could be `synonym', `antonym', `both', or nil.")
                     "Search Bing dict: "))
           (string (read-string prompt nil 'bing-dict-history default)))
      (list string)))
-  (save-match-data
-    (url-retrieve (concat bing-dict--base-url
-                          (url-hexify-string word))
-                  'bing-dict-brief-cb
-                  `(,(decode-coding-string word 'utf-8))
-                  t
-                  t)))
+
+  (unless (bing-dict--cache-initialized-p)
+    (or (bing-dict--cache-load)
+        (bing-dict--cache-init)))
+
+  (let ((cached-result (car (gethash word bing-dict--cache))))
+    (if (gethash word bing-dict--cache)
+        (progn
+          ;; update cached-result's time
+          (puthash word
+                   (cons cached-result (time-to-seconds))
+                   bing-dict--cache)
+          (message cached-result))
+      (save-match-data
+        (url-retrieve (concat bing-dict--base-url
+                              (url-hexify-string word))
+                      'bing-dict-brief-cb
+                      `(,(decode-coding-string word 'utf-8))
+                      t
+                      t)))))
+
+(add-hook 'kill-emacs-hook 'bing-dict--maybe-save)
 
 (provide 'bing-dict)
 ;;; bing-dict.el ends here
