@@ -88,3 +88,34 @@
     (let ((bing-dict-show-thesaurus 'both))
       (bing-dict-brief-sync "center"))
     "center [ˈsentər]: n. 中心；中央；核心；圆心 | v. 居中；把…置于中部；有中心；做中锋 | adj. 中点的 | 网络 居中对齐；中心点 | Synonym n. axis,cluster,complex,downtown v. adjust,arrange,balance,concentrate on,focus on | Antonym n. coating,edge,extreme,periphery v. ignore")))
+
+(ert-deftest bing-dict-cache ()
+  (should
+   (let ((bing-dict--cache '(("test" mock-result . mock-time)
+                             ("plain" mock-result . mock-time)
+                             ("a" mock-result . mock-time)
+                             ("is" mock-result . mock-time)
+                             ("This" mock-result . mock-time)))
+         (bing-dict-cache-auto-save t)
+         (bing-dict-cache-limit 3))
+     (equal (bing-dict--cache-overflow-p) t)))
+
+  (should
+   (let ((bing-dict--cache nil)
+         (bing-dict-cache-auto-save t)
+         (bing-dict-cache-limit 4))
+     (bing-dict-brief-sync "This")
+     (let ((saved-time (cdr (assoc-default "This" bing-dict--cache))))
+       (bing-dict-brief-sync "This")
+       (> (cdr (assoc-default "This" bing-dict--cache)) saved-time))))
+
+  (should
+   (let ((bing-dict--cache nil)
+         (bing-dict-cache-auto-save t)
+         (bing-dict-cache-limit 4))
+     (bing-dict-brief-sync "This")
+     (bing-dict-brief-sync "is")
+     (bing-dict-brief-sync "a")
+     (bing-dict-brief-sync "plain")
+     (bing-dict-brief-sync "test")
+     (equal (length bing-dict--cache) 4))))

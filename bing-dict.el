@@ -209,6 +209,8 @@ The value could be `synonym', `antonym', `both', or nil.")
       (insert definition))
     (write-region nil nil bing-dict-vocabulary-file)))
 
+(eval-when-compile (require 'cl))
+
 (defun bing-dict--message (format-string &rest args)
   (let ((result (apply #'format format-string args)))
     (let ((plain-result (substring-no-properties result)))
@@ -229,10 +231,9 @@ The value could be `synonym', `antonym', `both', or nil.")
         (when bing-dict-cache-auto-save
           ;; because we only support word: definition, so the first of args is the keyword
           (let ((word (substring-no-properties (car args))))
-            (puthash word
-                     ;; key   : word
-                     ;; value : (result-with-properties . seconds)
-                     (cons result (time-to-seconds))
+            ;; key   : word
+            ;; value : (result-with-properties . seconds)
+            (pushnew (cons word (cons result (time-to-seconds)))
                      bing-dict--cache))
           (bing-dict--update-cache))))
 
@@ -428,17 +429,15 @@ The value could be `synonym', `antonym', `both', or nil.")
           (string (read-string prompt nil 'bing-dict-history default)))
      (list string)))
 
-  (unless (bing-dict--cache-initialized-p)
-    (or (bing-dict--cache-load)
-        (bing-dict--cache-init)))
+  (when (and bing-dict-cache-auto-save
+             (not bing-dict--cache))
+    (bing-dict--cache-load))
 
-  (let ((cached-result (car (gethash word bing-dict--cache))))
-    (if (gethash word bing-dict--cache)
+  (let ((cached-result (car (assoc-default word bing-dict--cache))))
+    (if cached-result
         (progn
           ;; update cached-result's time
-          (puthash word
-                   (cons cached-result (time-to-seconds))
-                   bing-dict--cache)
+          (setcdr (assoc-default word bing-dict--cache) (time-to-seconds))
           (message cached-result))
       (save-match-data
         (url-retrieve (concat bing-dict--base-url
