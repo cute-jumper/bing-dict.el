@@ -429,11 +429,12 @@ The value could be `synonym', `antonym', `both', or nil.")
           (string (read-string prompt nil 'bing-dict-history default)))
      (list string)))
 
-  (when (and bing-dict-cache-auto-save
-             (not bing-dict--cache))
-    (bing-dict--cache-load))
+  (and bing-dict-cache-auto-save
+       (not bing-dict--cache)
+       (bing-dict--cache-load))
 
-  (let ((cached-result (car (assoc-default word bing-dict--cache))))
+  (let ((cached-result (and (listp bing-dict--cache)
+                            (car (assoc-default word bing-dict--cache)))))
     (if cached-result
         (progn
           ;; update cached-result's time
