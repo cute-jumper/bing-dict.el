@@ -26,12 +26,8 @@
 (require 'bing-dict)
 
 (defun bing-dict-brief-sync (word)
-  (save-match-data
-    (with-current-buffer (url-retrieve-synchronously
-                          (concat bing-dict--base-url
-                                  (url-hexify-string word)) t t)
-      (bing-dict-brief-cb nil (decode-coding-string word 'utf-8))
-      (substring-no-properties (current-message) 0))))
+  (bing-dict-brief word t)
+  (substring-no-properties (current-message) 0))
 
 (defmacro bing-dict-sync-test-body (word &rest body)
   (declare (indent 1))

@@ -85,6 +85,12 @@
 
 ;; ![bing-dict-screenshot2](./screenshot2.png)
 
+;; ## Command Line Usage
+
+;; Add an alias for the following command in your shell rc file:
+
+;; emacs --batch -Q -eval "(progn (add-to-list 'load-path \"/path/to/bing-dict.el\") (require 'bing-dict) (bing-dict-brief-sync \"center\"))"
+
 ;; ## For Features Requests
 ;; This extension aims for a quick search for a word. Currently this extension only
 ;; parses several sections in the search results and show a brief message in the
@@ -415,7 +421,7 @@ The value could be `synonym', `antonym', `both', or nil.")
     (error (bing-dict--message bing-dict--no-result-text))))
 
 ;;;###autoload
-(defun bing-dict-brief (word)
+(defun bing-dict-brief (word &optional sync-p)
   "Show the explanation of WORD from Bing in the echo area."
   (interactive
    (let* ((default (if (use-region-p)
@@ -441,12 +447,18 @@ The value could be `synonym', `antonym', `both', or nil.")
           (setcdr (assoc-default word bing-dict--cache) (time-to-seconds))
           (message cached-result))
       (save-match-data
-        (url-retrieve (concat bing-dict--base-url
-                              (url-hexify-string word))
-                      'bing-dict-brief-cb
-                      `(,(decode-coding-string word 'utf-8))
-                      t
-                      t)))))
+        (if sync-p
+            (with-current-buffer (url-retrieve-synchronously
+                                  (concat bing-dict--base-url
+                                          (url-hexify-string word))
+                                  t t)
+              (bing-dict-brief-cb nil (decode-coding-string word 'utf-8)))
+          (url-retrieve (concat bing-dict--base-url
+                                (url-hexify-string word))
+                        'bing-dict-brief-cb
+                        `(,(decode-coding-string word 'utf-8))
+                        t
+                        t))))))
 
 (add-hook 'kill-emacs-hook 'bing-dict--maybe-save)
 

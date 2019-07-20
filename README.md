@@ -72,6 +72,13 @@ By default, bing-dict.el will cache all your queries and results into
 
     (setq bing-dict-cache-auto-save t)
 
+
+## Command Line Usage
+
+Add an alias for the following command in your shell rc file:
+
+    emacs --batch -Q -eval "(progn (add-to-list 'load-path \"/path/to/bing-dict.el\") (require 'bing-dict) (bing-dict-brief-sync \"center\"))"
+
 ## For Features Requests
 This extension aims for a quick search for a word. Currently this extension only
 parses several sections in the search results and show a brief message in the
