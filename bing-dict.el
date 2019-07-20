@@ -87,9 +87,16 @@
 
 ;; ## Command Line Usage
 
-;; Add an alias for the following command in your shell rc file:
+;; Add the following script to your `PATH` to look up a word from the command line:
 
-;; emacs --batch -Q -eval "(progn (add-to-list 'load-path \"/path/to/bing-dict.el\") (require 'bing-dict) (bing-dict-brief-sync \"center\"))"
+;; ```
+;; #!/path/to/emacs --script
+;; (add-to-list 'load-path "/path/to/bing-dict.el")
+;; (require 'bing-dict)
+;; (defun main ()
+;;   (bing-dict-brief (format "%s" command-line-args-left) t))
+;; (main)
+;; ```
 
 ;; ## For Features Requests
 ;; This extension aims for a quick search for a word. Currently this extension only
