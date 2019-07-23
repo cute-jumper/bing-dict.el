@@ -66,11 +66,14 @@ screenshot:
 
 ![bing-dict-screenshot2](./screenshot2.png)
 
-By default, bing-dict.el will cache all your queries and results into
-`bing-dict-cache-file`(which points to
-`~/.emacs.d/var/bing-dict/bing-dict-save.el` by default):
+Use the following configuration if you want bing-dict.el to cache all your
+queries and results:
 
     (setq bing-dict-cache-auto-save t)
+
+You can customize the value of `bing-dict-cache-file` to change the location
+where bing-dict.el stores the cache. The default value is
+`~/.emacs.d/var/bing-dict/bing-dict-save.el`.
 
 
 ## Command Line Usage
