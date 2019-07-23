@@ -1,4 +1,4 @@
-(defvar bing-dict-cache-auto-save t
+(defvar bing-dict-cache-auto-save nil
   "Whether to save the bing dict cache when leaving emacs.")
 
 (defvar bing-dict--cache nil
