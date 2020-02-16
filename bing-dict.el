@@ -288,7 +288,7 @@ The value could be `synonym', `antonym', `both', or nil.")
   (let ((pron-regexp (concat "<div class=\"hd_pr"
                              (and (eq bing-dict-pronunciation-style 'us)
                                   "US")
-                             "\"")))
+                             " b_primtxt\"")))
     (propertize
      (bing-dict--replace-html-entities
       (or
@@ -312,7 +312,7 @@ The value could be `synonym', `antonym', `both', or nil.")
   (let (defs)
     (goto-char (point-min))
     (while (re-search-forward
-            "span class=\"pos\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
+            "span class=\"pos\">\\(.*?\\)</span>.*?<span class=\"def b_regtxt\">\\(.*?\\)</span></li>"
             nil
             t)
       (let ((pos (propertize (match-string-no-properties 1)
@@ -322,7 +322,7 @@ The value could be `synonym', `antonym', `both', or nil.")
         (push (format "%s %s" pos def) defs)))
     (goto-char (point-min))
     (when (re-search-forward
-           "span class=\"pos web\">\\(.*?\\)</span>.*?<span class=\"def\">\\(.*?\\)</span></li>"
+           "span class=\"pos web\">\\(.*?\\)</span>.*?<span class=\"def b_regtxt\">\\(.*?\\)</span></li>"
            nil
            t)
       (let ((pos (propertize (match-string-no-properties 1)
@@ -339,7 +339,7 @@ The value could be `synonym', `antonym', `both', or nil.")
       (catch 'break
         (while t
           (re-search-forward
-           "div class=\"de_title1\">\\(.*?\\)</div><div class=\"col_fl\">\\(.*?\\)</div>"
+           "div class=\"de_title1.*?\">\\(.*?\\)</div><div class=\"col_fl\">\\(.*?\\)</div>"
            nil t)
           (push (format "%s %s"
                         (propertize (match-string-no-properties 1) 'face 'font-lock-string-face)
